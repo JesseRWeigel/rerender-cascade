@@ -139,7 +139,87 @@ it has independently measured that the DOM did not change. Everything else is a 
 
 ```
 $ bash scripts/verify.sh
-STATUS_PLACEHOLDER
+rerender-cascade verification
+  node v24.13.0, repo ~/Projects/thousand/projects/rerender-cascade
+
+1. dependencies
+  ok    react 19.2.8
+  ok    react-dom 19.2.8
+  ok    jsdom 26.1.0
+  ok    playwright-core 1.58.2
+
+2. unit suite: every expected cascade against a live React run
+  ok    51 unit tests pass
+
+3. the recording still matches what React does right now
+  ok    data/cascades.json matches a fresh run (React 19.2.8)
+  ok    23 scenarios, 29 recorded state changes, 124 component verdicts, 53 re-renders, React 19.2.8
+
+4. independent recount off React's own fiber flags
+  ok    independent fiber recount: 306 agreed, 0 disagreed
+      note  setstate-net-zero/set: App ran 1 time(s) but React committed no work for it, and the DOM did not change
+
+5. every claimed optimisation has a run where it fails
+  ok    12 scenario groups, every optimisation paired with a run where it does not work
+
+6. the page is generated from the recording
+  ok    docs/index.html matches data/cascades.json (124 verdicts)
+
+7. the page in a real browser
+  ok    browser check: 19 passed, 0 failed
+      ok    port 41793 is serving this project's page
+      ok    390px: no element overflows the page
+      ok    the inline script parsed and ran to the end
+      ok    the script counted 53 measured re-renders, matching the recording
+      ok    12 scenario group buttons
+      ok    1 variant panel(s) drawn for the first group
+      ok    124 rows in the full measurement table
+      ok    9 headline cards
+      ok    the 9 drawn tree nodes match the recorded render counts
+      ok    the explorer summary line was computed in the browser
+      ok    the theme toggle flips both ways (dark then light)
+      ok    the background actually changes with the toggle (rgb(15, 18, 24) vs rgb(255, 255, 255))
+      ok    768px: no element overflows the page
+      ok    1280px: no element overflows the page
+      ok    prefers-color-scheme: dark gives the dark palette (rgb(15, 18, 24))
+      ok    with prefers-color-scheme: dark, data-theme still overrides in both directions
+      ok    prefers-color-scheme: light gives the light palette (rgb(255, 255, 255))
+      ok    with prefers-color-scheme: light, data-theme still overrides in both directions
+      ok    no page errors or console errors
+
+8. sabotage: break each check on purpose and require it to notice
+  ok    8 sabotage(s) caught, 0 not caught
+          probe drops MemoToolbar renders: sabotage changed 2 line(s) of real output
+          attribution compares props by value, not identity: sabotage changed 8 line(s) of real output
+          attribution credits memo for a subtree React never reached: sabotage changed 6 line(s) of real output
+          the fixed variant stops applying its fix: sabotage changed 2 line(s) of real output
+          a render count in data/cascades.json is edited by hand: sabotage changed 6 line(s) of real output
+          a number on docs/index.html is edited by hand: sabotage changed 3 line(s) of real output
+          the page's inline script no longer parses: sabotage changed 4 line(s) of real output
+          the independent recount loses its stale-flag filter: sabotage changed 3 line(s) of real output
+
+9. nothing private or oversized in git
+  ok    no absolute home paths in tracked files
+  ok    no credential-shaped strings in tracked files
+  ok    no tracked file contains a NUL byte, so the scans above could read all of them
+  ok    node_modules is not tracked
+  ok    no tracked file is over 1 MB (22 files, 404 KB total)
+
+10. the README block regenerates from the recording
+  ok    README.md measured block matches the recording (9 paired cases)
+
+11. the README says what this run says
+  ok    README.md has a Status section
+  ok    README states "rerender-cascade verification passed"
+  ok    README states "51 unit tests pass"
+  ok    README states "23 scenarios"
+  ok    README states "124 component verdicts"
+  ok    README states "53 re-renders"
+  ok    README states "React 19.2.8"
+  ok    README states "8 sabotage"
+
+26 passed, 0 failed
+rerender-cascade verification passed
 ```
 
 ## Licence
