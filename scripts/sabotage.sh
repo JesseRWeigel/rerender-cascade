@@ -236,6 +236,22 @@ run_sabotage "the declared tree stops matching React's fiber tree" "$TMP/patches
   "node scripts/observe.mjs" \
   "node scripts/independent-check.mjs"
 
+# ---------------------------------------------------------------------------------------------
+cat >"$TMP/patches/11.py" <<'PYX'
+# 11. The counterfactual run stops applying React.memo. Every "measured: with React.memo on every
+#     component this would not have rendered" line on the page would then be a claim backed by a
+#     run identical to the one it is supposed to contrast with.
+p = 'src/scenarios.mjs'
+s = open(p).read()
+old = "  return MEMO_ALL ? React.memo(c) : c;"
+assert old in s, 'anchor missing'
+s = s.replace(old, "  return c;", 1)
+open(p, 'w').write(s)
+PYX
+run_sabotage "the memo-everywhere counterfactual stops applying memo" "$TMP/patches/11.py" \
+  "node -e \"import('./src/run.mjs').then(async (m) => { const { byId } = await import('./src/scenarios.mjs'); const r = await m.runScenario(byId.get('memo-stable-props'), 'bump', { memoAll: true }); console.log(r.update.renders.map((x) => x.name).join(',')); })\"" \
+  "node --test 'test/*.test.mjs'"
+
 echo
 echo "$pass sabotage(s) caught, $fail not caught"
 [ "$fail" = "0" ] || exit 1

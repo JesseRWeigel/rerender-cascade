@@ -22,7 +22,17 @@ export async function collect() {
     const runs = [];
     for (const action of scenario.actions) {
       const run = await runScenario(scenario, action.id);
-      runs.push(attribute(scenario, run));
+      const verdict = attribute(scenario, run);
+      // The same tree again, with React.memo on every component. This is the measured answer to
+      // "would memo have helped here", one number per component.
+      const memoAllRun = await runScenario(scenario, action.id, { memoAll: true });
+      const memoAllCounts = new Map();
+      for (const r of memoAllRun.update.renders) {
+        memoAllCounts.set(r.name, (memoAllCounts.get(r.name) || 0) + 1);
+      }
+      for (const node of verdict.nodes) node.memoAllRenderCount = memoAllCounts.get(node.name) || 0;
+      verdict.memoAllTotal = memoAllRun.update.renders.length;
+      runs.push(verdict);
     }
     out.push({
       id: scenario.id,

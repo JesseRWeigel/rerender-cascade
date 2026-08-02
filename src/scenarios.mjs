@@ -12,12 +12,27 @@ import React from 'react';
 
 const h = React.createElement;
 
+// When true, every component built below is wrapped in React.memo. This is how the counterfactual
+// the page prints, "React.memo here would have prevented this render", stops being an assertion
+// and becomes a second measured run of the same tree.
+let MEMO_ALL = false;
+export function setMemoAll(value) {
+  MEMO_ALL = value;
+}
+
 // Sugar for "probe first, then render". Keeping this a plain call rather than a HOC matters: a
 // wrapper component would add a fiber and change the very cascade being measured.
 function comp(name, fn) {
   const c = (props) => fn(props);
   Object.defineProperty(c, 'name', { value: name });
-  return c;
+  return MEMO_ALL ? React.memo(c) : c;
+}
+
+// React.memo of an already memoised component would nest two boundaries, so in MEMO_ALL mode the
+// explicit wrappers below become no-ops instead.
+const MEMO_TYPE = Symbol.for('react.memo');
+function memo(c) {
+  return c && c.$$typeof === MEMO_TYPE ? c : React.memo(c);
 }
 
 // An element created once and reused across every render of its creator, so React always sees
@@ -92,7 +107,7 @@ def({
       probe('PanelBody', props);
       return h('p', null, n);
     });
-    const MemoPanel = React.memo(
+    const MemoPanel = memo(
       comp('MemoPanel', (props) => {
         const n = counter('MemoPanel');
         probe('MemoPanel', props);
@@ -151,7 +166,7 @@ function memoPropsScenario({ id, variant, title, claim, inlineObject }) {
         probe('PlainLabel', props);
         return h('span', null, 'label');
       });
-      const MemoToolbar = React.memo(
+      const MemoToolbar = memo(
         comp('MemoToolbar', (props) => {
           probe('MemoToolbar', props);
           return h('div', null, props.label);
@@ -205,7 +220,7 @@ function callbackScenario({ id, variant, title, claim, stable }) {
     build(probe) {
       const handles = {};
       const counters = {};
-      const MemoButton = React.memo(
+      const MemoButton = memo(
         comp('MemoButton', (props) => {
           probe('MemoButton', props);
           return h('button', { onClick: props.onSave }, 'save');
@@ -257,7 +272,7 @@ function callbackDepsScenario({ id, variant, title, claim, unstableDep }) {
     build(probe) {
       const handles = {};
       const counters = {};
-      const MemoButton = React.memo(
+      const MemoButton = memo(
         comp('MemoButton', (props) => {
           probe('MemoButton', props);
           return h('button', { onClick: props.onSave }, 'save');
@@ -313,7 +328,7 @@ function memoHookScenario({ id, variant, title, claim, unstableDep }) {
     build(probe) {
       const handles = {};
       const counters = { filterRuns: 0 };
-      const MemoTable = React.memo(
+      const MemoTable = memo(
         comp('MemoTable', (props) => {
           probe('MemoTable', props);
           return h('div', null, props.rows.length);
@@ -583,7 +598,7 @@ function memoChildrenScenario({ id, variant, title, claim, hoist }) {
         probe('Expensive', props);
         return h('p', null, 'expensive');
       });
-      const MemoPanel = React.memo(
+      const MemoPanel = memo(
         comp('MemoPanel', (props) => {
           probe('MemoPanel', props);
           return h('section', null, props.children);
@@ -648,7 +663,7 @@ function memoContextScenario({ id, variant, title, claim, viaContext }) {
         probe('ThemeReader', props);
         return h('span', null, 'static');
       });
-      const MemoSection = React.memo(
+      const MemoSection = memo(
         comp('MemoSection', (props) => {
           probe('MemoSection', props);
           return h('section', null, h(ThemeReader));

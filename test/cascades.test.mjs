@@ -199,6 +199,50 @@ test('two updates that cancel out still render the owner once, but not its child
   assert.equal(run.domChanged, false, 'the render produced no DOM change at all');
 });
 
+// The counterfactual, measured rather than reasoned about. Every scenario is rebuilt with every
+// component wrapped in React.memo and run again. A component the model says memo would have saved
+// must actually stop rendering, and one it says memo would not have saved must keep rendering.
+test('the "memo would have helped" prediction survives actually adding memo everywhere', async () => {
+  let checkedTrue = 0;
+  let checkedFalse = 0;
+  for (const key of Object.keys(EXPECTED)) {
+    const [scenarioId, actionId] = key.split('/');
+    const scenario = byId.get(scenarioId);
+    const base = await measured(key);
+    const memoAll = attribute(scenario, await runScenario(scenario, actionId, { memoAll: true }));
+    for (const node of base.nodes) {
+      const after = memoAll.nodes.find((n) => n.name === node.name);
+      if (node.memoWouldHelp === true) {
+        assert.equal(after.renderCount, 0, `${key}/${node.name} was predicted to be saved by memo`);
+        checkedTrue += 1;
+      } else if (node.memoWouldHelp === false) {
+        assert.ok(after.renderCount > 0, `${key}/${node.name} was predicted not to be saved by memo`);
+        checkedFalse += 1;
+      }
+    }
+  }
+  assert.ok(checkedTrue >= 10, `expected at least 10 memo-would-help predictions, got ${checkedTrue}`);
+  assert.ok(checkedFalse >= 8, `expected at least 8 memo-would-not-help predictions, got ${checkedFalse}`);
+});
+
+test('memo everywhere still leaves renders that memo cannot remove', async () => {
+  let removed = 0;
+  let remaining = 0;
+  for (const key of Object.keys(EXPECTED)) {
+    const [scenarioId, actionId] = key.split('/');
+    const scenario = byId.get(scenarioId);
+    const base = await measured(key);
+    const memoAll = attribute(scenario, await runScenario(scenario, actionId, { memoAll: true }));
+    for (const node of base.nodes) {
+      const after = memoAll.nodes.find((n) => n.name === node.name);
+      removed += node.renderCount - after.renderCount;
+      remaining += after.renderCount;
+    }
+  }
+  assert.ok(removed > 0, 'memo everywhere removed no renders at all, so the mode is not applying');
+  assert.ok(remaining > 0, 'memo everywhere removed every render, which would mean the trees are trivial');
+});
+
 test('memo would have helped exactly where the data says the props were unchanged', async () => {
   for (const key of Object.keys(EXPECTED)) {
     const run = await measured(key);

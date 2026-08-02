@@ -46,6 +46,11 @@ const totals = {
   ),
 };
 
+const memoAllTotal = data.scenarios.reduce(
+  (n, s) => n + s.runs.reduce((m, r) => m + r.nodes.reduce((k, x) => k + x.memoAllRenderCount, 0), 0),
+  0,
+);
+
 const filterRuns = (id) => {
   const s = data.scenarios.find((x) => x.id === id);
   return s.runs[0].counters.filterRuns;
@@ -64,6 +69,10 @@ Two more measured results that are not a pair:
 
 - \`usememo-unstable-dep\` runs its expensive function **${filterRuns('usememo-unstable-dep')}** times across a mount and one
   click; \`usememo-primitive-dep\` runs it **${filterRuns('usememo-primitive-dep')}**. The dependency array is the only difference.
+- Every scenario replayed with \`React.memo\` wrapped around **every** component drops the total
+  from **${totals.renders}** re-renders to **${memoAllTotal}**. Memo everywhere removes
+  ${totals.renders - memoAllTotal} of them and cannot touch the other ${memoAllTotal}, which is the
+  measured answer to "would memo have fixed this".
 - \`setstate-same-value\`: setting state to the value it already holds renders \`App\`
   **${nodeOf('setstate-same-value', 'set', 'App').renderCount}** times. \`setstate-net-zero\`, where two updates in one event cancel out, renders
   \`App\` **${nodeOf('setstate-net-zero', 'set', 'App').renderCount}** time and \`Child\` **${nodeOf('setstate-net-zero', 'set', 'Child').renderCount}**. Same final state, different render count.

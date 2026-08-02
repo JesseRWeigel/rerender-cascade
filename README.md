@@ -64,6 +64,10 @@ Two more measured results that are not a pair:
 
 - `usememo-unstable-dep` runs its expensive function **2** times across a mount and one
   click; `usememo-primitive-dep` runs it **1**. The dependency array is the only difference.
+- Every scenario replayed with `React.memo` wrapped around **every** component drops the total
+  from **53** re-renders to **38**. Memo everywhere removes
+  15 of them and cannot touch the other 38, which is the
+  measured answer to "would memo have fixed this".
 - `setstate-same-value`: setting state to the value it already holds renders `App`
   **0** times. `setstate-net-zero`, where two updates in one event cancel out, renders
   `App` **1** time and `Child` **0**. Same final state, different render count.
@@ -106,16 +110,22 @@ script could have produced.
   measures for itself whether the DOM changed.
 - **Negative controls.** Every optimisation the project claims prevents a render is paired with a
   run where the same optimisation does not, and verify fails if any group loses its pair.
-- **Sabotage.** `scripts/sabotage.sh` runs ten attacks, each in a throwaway copy of the working
+- **The counterfactual is a second run, not an opinion.** When the page says "React.memo here
+  would have prevented this render", that came from rebuilding the identical tree with
+  `React.memo` around every component and replaying the same action. A component predicted to be
+  saved has to actually stop rendering, and one predicted not to be saved has to keep rendering.
+  All 124 verdicts agree.
+- **Sabotage.** `scripts/sabotage.sh` runs eleven attacks, each in a throwaway copy of the working
   tree. It drops one component's renders in the probe, compares props by value instead of by
   identity, credits a `React.memo` bail-out to a subtree React never reached, removes the fix from
   a fixed variant, hand-edits a render count in the recorded data, hand-edits a number on the
   published page, puts one unbalanced parenthesis in the page's inline script, removes the
   correctness rule from the independent recount, makes the page generator read the wrong field and
   regenerate the page so the generator's own `--check` agrees with itself, and breaks the declared
-  component tree. Every one of them is proved to have changed real output before any conclusion is
-  drawn from it, because an attack that did not apply is a no-op with a confident write-up attached.
-  Then the corresponding check has to fail.
+  component tree, and stops applying `React.memo` in the counterfactual run. Every one of them is
+  proved to have changed real output before any conclusion is drawn from it, because an attack that
+  did not apply is a no-op with a confident write-up attached. Then the corresponding check has to
+  fail.
 
   The ninth of those is the interesting one. `build-docs.mjs --check` passes it, because comparing
   a page against the script that produced it cannot catch a bug in that script. Only loading the
@@ -159,7 +169,7 @@ rerender-cascade verification
   ok    playwright-core 1.58.2
 
 2. unit suite: every expected cascade against a live React run
-  ok    51 unit tests pass
+  ok    53 unit tests pass
 
 3. the recording still matches what React does right now
   ok    data/cascades.json matches a fresh run (React 19.2.8)
@@ -180,7 +190,7 @@ rerender-cascade verification
 
 7. the page in a real browser
   ok    browser check: 21 passed, 0 failed
-      ok    port 45113 is serving this project's page
+      ok    port 41031 is serving this project's page
       ok    390px: no element overflows the page
       ok    the inline script parsed and ran to the end
       ok    the script counted 53 measured re-renders, matching the recording
@@ -203,7 +213,7 @@ rerender-cascade verification
       ok    no page errors or console errors
 
 8. sabotage: break each check on purpose and require it to notice
-  ok    10 sabotage(s) caught, 0 not caught
+  ok    11 sabotage(s) caught, 0 not caught
           probe drops MemoToolbar renders: sabotage changed 2 line(s) of real output
           attribution compares props by value, not identity: sabotage changed 8 line(s) of real output
           attribution credits memo for a subtree React never reached: sabotage changed 6 line(s) of real output
@@ -214,13 +224,14 @@ rerender-cascade verification
           the independent recount loses its stale-flag filter: sabotage changed 3 line(s) of real output
           the page generator draws the wrong field and regenerates itself: sabotage changed 3 line(s) of real output
           the declared tree stops matching React's fiber tree: sabotage changed 8 line(s) of real output
+          the memo-everywhere counterfactual stops applying memo: sabotage changed 2 line(s) of real output
 
 9. nothing private or oversized in git
   ok    no absolute home paths in tracked files
   ok    no credential-shaped strings in tracked files
   ok    no tracked file contains a NUL byte, so the scans above could read all of them
   ok    node_modules is not tracked
-  ok    no tracked file is over 1 MB (22 files, 412 KB total)
+  ok    no tracked file is over 1 MB (22 files, 424 KB total)
 
 10. the README block regenerates from the recording
   ok    README.md measured block matches the recording (9 paired cases)
@@ -228,12 +239,12 @@ rerender-cascade verification
 11. the README says what this run says
   ok    README.md has a Status section
   ok    README states "rerender-cascade verification passed"
-  ok    README states "51 unit tests pass"
+  ok    README states "53 unit tests pass"
   ok    README states "23 scenarios"
   ok    README states "124 component verdicts"
   ok    README states "53 re-renders"
   ok    README states "React 19.2.8"
-  ok    README states "10 sabotage"
+  ok    README states "11 sabotage"
 
 27 passed, 0 failed
 rerender-cascade verification passed

@@ -113,6 +113,7 @@ const payload = {
         actionLabel: r.actionLabel,
         owner: r.owner,
         domChanged: r.domChanged,
+        memoAllTotal: r.memoAllTotal,
         counters: r.counters,
         countersAfterMount: r.countersAfterMount,
         nodes: r.nodes.map((n) => ({
@@ -121,6 +122,7 @@ const payload = {
           memo: n.memo,
           consumes: n.consumes,
           renderCount: n.renderCount,
+          memoAllRenderCount: n.memoAllRenderCount,
           reason: n.reason,
           detail: n.detail,
           propsChanged: n.propsChanged || [],
@@ -382,9 +384,15 @@ ${tableRows}
       facts.push('the field it reads (' + node.readsUnchanged.join(', ') + ') is the identical value it already had');
     }
     if (node.memoWouldHelp === true) {
-      facts.push('React.memo here would have prevented this render: no prop changed identity');
+      facts.push(
+        'measured: with React.memo on every component in this tree, ' + node.name +
+        ' rendered ' + node.memoAllRenderCount + ' times instead of ' + node.renderCount
+      );
     } else if (node.memoWouldHelp === false && node.renderCount > 0) {
-      facts.push('React.memo here would not have prevented this render');
+      facts.push(
+        'measured: even with React.memo on every component in this tree, ' + node.name +
+        ' still rendered ' + node.memoAllRenderCount + ' times'
+      );
     }
     if (node.name === run.owner && node.renderCount === 0) {
       facts.push('this is the component whose state was set, and React still did not render it');
@@ -458,6 +466,8 @@ ${tableRows}
         extra.push(k + ': ' + run.countersAfterMount[k] + ' after mount, ' + run.counters[k] + ' after the update');
       });
       extra.push(run.domChanged ? 'the DOM changed' : 'the DOM did not change at all');
+      extra.push('with React.memo on every component: ' + run.memoAllTotal + ' render(s) instead of ' +
+        run.nodes.reduce(function (n, x) { return n + x.renderCount; }, 0));
       panel.appendChild(el('p', 'foot', extra.join(' | ')));
       variants.appendChild(panel);
     });
