@@ -1,0 +1,3185 @@
+{
+  "schema": 1,
+  "react": "19.2.8",
+  "reactDom": "19.2.8",
+  "scenarios": [
+    {
+      "id": "tree-explorer",
+      "group": "explorer",
+      "variant": "control",
+      "title": "Trigger a state change at any node",
+      "question": "Where does an update actually travel when you set state at an arbitrary node?",
+      "claim": "A state change renders the owning component and everything below it, and nothing above or beside it, except where a React.memo boundary with unchanged props stops it.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Header",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Sidebar",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "SidebarNav",
+          "parent": "Sidebar",
+          "elementFrom": "Sidebar",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "SidebarStats",
+          "parent": "Sidebar",
+          "elementFrom": "Sidebar",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Main",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoPanel",
+          "parent": "Main",
+          "elementFrom": "Main",
+          "memo": true,
+          "consumes": []
+        },
+        {
+          "name": "PanelBody",
+          "parent": "MemoPanel",
+          "elementFrom": "MemoPanel",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Footer",
+          "parent": "Main",
+          "elementFrom": "Main",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "tree-explorer",
+          "actionId": "app",
+          "actionLabel": "set state in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Header",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "Sidebar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "SidebarNav",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "SidebarStats",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "Main",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            },
+            {
+              "name": "PanelBody",
+              "parent": "MemoPanel",
+              "elementFrom": "MemoPanel",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Footer",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 7,
+          "totalMountRenders": 9,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        },
+        {
+          "scenarioId": "tree-explorer",
+          "actionId": "sidebar",
+          "actionLabel": "set state in Sidebar",
+          "owner": "Sidebar",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Header",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Sidebar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "SidebarNav",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "SidebarStats",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "Main",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "PanelBody",
+              "parent": "MemoPanel",
+              "elementFrom": "MemoPanel",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Footer",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 3,
+          "totalMountRenders": 9,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        },
+        {
+          "scenarioId": "tree-explorer",
+          "actionId": "sidebarnav",
+          "actionLabel": "set state in SidebarNav",
+          "owner": "SidebarNav",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Header",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Sidebar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarNav",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "SidebarStats",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Main",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "PanelBody",
+              "parent": "MemoPanel",
+              "elementFrom": "MemoPanel",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Footer",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 9,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        },
+        {
+          "scenarioId": "tree-explorer",
+          "actionId": "main",
+          "actionLabel": "set state in Main",
+          "owner": "Main",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Header",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Sidebar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarNav",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarStats",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Main",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            },
+            {
+              "name": "PanelBody",
+              "parent": "MemoPanel",
+              "elementFrom": "MemoPanel",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Footer",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 9,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        },
+        {
+          "scenarioId": "tree-explorer",
+          "actionId": "memopanel",
+          "actionLabel": "set state in MemoPanel",
+          "owner": "MemoPanel",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Header",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Sidebar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarNav",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarStats",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Main",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "PanelBody",
+              "parent": "MemoPanel",
+              "elementFrom": "MemoPanel",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            },
+            {
+              "name": "Footer",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 9,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        },
+        {
+          "scenarioId": "tree-explorer",
+          "actionId": "panelbody",
+          "actionLabel": "set state in PanelBody",
+          "owner": "PanelBody",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Header",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Sidebar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarNav",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarStats",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Main",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "PanelBody",
+              "parent": "MemoPanel",
+              "elementFrom": "MemoPanel",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Footer",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 9,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        },
+        {
+          "scenarioId": "tree-explorer",
+          "actionId": "footer",
+          "actionLabel": "set state in Footer",
+          "owner": "Footer",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Header",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Sidebar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarNav",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "SidebarStats",
+              "parent": "Sidebar",
+              "elementFrom": "Sidebar",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Main",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "PanelBody",
+              "parent": "MemoPanel",
+              "elementFrom": "MemoPanel",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "Footer",
+              "parent": "Main",
+              "elementFrom": "Main",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 9,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-stable-props",
+      "group": "memo-prop-identity",
+      "variant": "works",
+      "title": "React.memo with only primitive props",
+      "question": "Does React.memo stop the child re-rendering when the parent re-renders?",
+      "claim": "MemoToolbar does not re-render when App re-renders, because every prop is === to last time.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoToolbar",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        },
+        {
+          "name": "PlainLabel",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-stable-props",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoToolbar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            },
+            {
+              "name": "PlainLabel",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-inline-object",
+      "group": "memo-prop-identity",
+      "variant": "defeated",
+      "title": "React.memo defeated by an inline object prop",
+      "question": "Does React.memo stop the child re-rendering when the parent re-renders?",
+      "claim": "Adding style={{ padding: 8 }} makes MemoToolbar re-render on every parent render. The memo is still there and does nothing.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoToolbar",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        },
+        {
+          "name": "PlainLabel",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-inline-object",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoToolbar",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "props-changed",
+              "detail": "React.memo compared props and found a change",
+              "propsChanged": [
+                "style"
+              ],
+              "propsDetail": [
+                {
+                  "key": "style",
+                  "before": "object",
+                  "after": "object",
+                  "sameContent": true
+                }
+              ],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            },
+            {
+              "name": "PlainLabel",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 3,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-inline-arrow",
+      "group": "memo-callback-identity",
+      "variant": "defeated",
+      "title": "React.memo defeated by an inline arrow function",
+      "question": "Does passing a function to a memoised child break the memo?",
+      "claim": "A fresh arrow function every render is a changed prop, so MemoButton re-renders every time.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoButton",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-inline-arrow",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoButton",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "props-changed",
+              "detail": "React.memo compared props and found a change",
+              "propsChanged": [
+                "onSave"
+              ],
+              "propsDetail": [
+                {
+                  "key": "onSave",
+                  "before": "function",
+                  "after": "function",
+                  "sameContent": true
+                }
+              ],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-usecallback",
+      "group": "memo-callback-identity",
+      "variant": "works",
+      "title": "useCallback with an empty dependency array",
+      "question": "Does passing a function to a memoised child break the memo?",
+      "claim": "The same function identity every render, so MemoButton skips its render.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoButton",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-usecallback",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoButton",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "usecallback-unstable-dep",
+      "group": "usecallback-deps",
+      "variant": "defeated",
+      "title": "useCallback with an object in the dependency array",
+      "question": "Does wrapping a handler in useCallback guarantee a stable identity?",
+      "claim": "The dependency is a fresh object every render, so useCallback returns a fresh function every render and the memo below it never bails out.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoButton",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "usecallback-unstable-dep",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoButton",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "props-changed",
+              "detail": "React.memo compared props and found a change",
+              "propsChanged": [
+                "onSave"
+              ],
+              "propsDetail": [
+                {
+                  "key": "onSave",
+                  "before": "function",
+                  "after": "function",
+                  "sameContent": true
+                }
+              ],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "usecallback-primitive-dep",
+      "group": "usecallback-deps",
+      "variant": "works",
+      "title": "The same useCallback with a primitive dependency",
+      "question": "Does wrapping a handler in useCallback guarantee a stable identity?",
+      "claim": "One character of difference in the dependency array and MemoButton stops re-rendering.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoButton",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "usecallback-primitive-dep",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoButton",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "usememo-unstable-dep",
+      "group": "usememo-deps",
+      "variant": "defeated",
+      "title": "useMemo with a freshly built object in the dependency array",
+      "question": "Does useMemo stop the expensive work re-running?",
+      "claim": "The memo never hits: the expensive function runs on every render and its result is a new array, so MemoTable re-renders too.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoTable",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "usememo-unstable-dep",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoTable",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "props-changed",
+              "detail": "React.memo compared props and found a change",
+              "propsChanged": [
+                "rows"
+              ],
+              "propsDetail": [
+                {
+                  "key": "rows",
+                  "before": "array(3)",
+                  "after": "array(3)",
+                  "sameContent": true
+                }
+              ],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            }
+          ],
+          "counters": {
+            "filterRuns": 2
+          },
+          "countersAfterMount": {
+            "filterRuns": 1
+          },
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "usememo-primitive-dep",
+      "group": "usememo-deps",
+      "variant": "works",
+      "title": "The same useMemo once the dependency is stable",
+      "question": "Does useMemo stop the expensive work re-running?",
+      "claim": "The expensive function runs once, the result keeps its identity, and MemoTable skips.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoTable",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "usememo-primitive-dep",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoTable",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            }
+          ],
+          "counters": {
+            "filterRuns": 1
+          },
+          "countersAfterMount": {
+            "filterRuns": 1
+          },
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "context-single-object",
+      "group": "context-granularity",
+      "variant": "defeated",
+      "title": "One context object holding two unrelated fields",
+      "question": "Does a component that reads only ctx.user re-render when only ctx.theme changes?",
+      "claim": "UserBadge re-renders on a theme change even though session.user is the same object it already had.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Shell",
+          "parent": "App",
+          "elementFrom": "(hoisted)",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "UserBadge",
+          "parent": "Shell",
+          "elementFrom": "Shell",
+          "memo": false,
+          "consumes": [
+            "Session"
+          ]
+        },
+        {
+          "name": "ThemeSwitch",
+          "parent": "Shell",
+          "elementFrom": "Shell",
+          "memo": false,
+          "consumes": [
+            "Session"
+          ]
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "context-single-object",
+          "actionId": "theme",
+          "actionLabel": "change only the theme",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Shell",
+              "parent": "App",
+              "elementFrom": "(hoisted)",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "element-identity",
+              "detail": "React saw the same element object it already had and bailed out",
+              "propsChanged": []
+            },
+            {
+              "name": "UserBadge",
+              "parent": "Shell",
+              "elementFrom": "Shell",
+              "memo": false,
+              "consumes": [
+                "Session"
+              ],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "context",
+              "detail": "a context value it reads changed identity",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [
+                "Session"
+              ],
+              "readsUnchanged": [
+                "user"
+              ],
+              "memoWouldHelp": false
+            },
+            {
+              "name": "ThemeSwitch",
+              "parent": "Shell",
+              "elementFrom": "Shell",
+              "memo": false,
+              "consumes": [
+                "Session"
+              ],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "context",
+              "detail": "a context value it reads changed identity",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [
+                "Session"
+              ],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 3,
+          "totalMountRenders": 4,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "context-split",
+      "group": "context-granularity",
+      "variant": "works",
+      "title": "The same tree with the context split in two",
+      "question": "Does a component that reads only ctx.user re-render when only ctx.theme changes?",
+      "claim": "UserBadge does not re-render on a theme change.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Shell",
+          "parent": "App",
+          "elementFrom": "(hoisted)",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "UserBadge",
+          "parent": "Shell",
+          "elementFrom": "Shell",
+          "memo": false,
+          "consumes": [
+            "User"
+          ]
+        },
+        {
+          "name": "ThemeSwitch",
+          "parent": "Shell",
+          "elementFrom": "Shell",
+          "memo": false,
+          "consumes": [
+            "Theme"
+          ]
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "context-split",
+          "actionId": "theme",
+          "actionLabel": "change only the theme",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Shell",
+              "parent": "App",
+              "elementFrom": "(hoisted)",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "element-identity",
+              "detail": "React saw the same element object it already had and bailed out",
+              "propsChanged": []
+            },
+            {
+              "name": "UserBadge",
+              "parent": "Shell",
+              "elementFrom": "Shell",
+              "memo": false,
+              "consumes": [
+                "User"
+              ],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "ThemeSwitch",
+              "parent": "Shell",
+              "elementFrom": "Shell",
+              "memo": false,
+              "consumes": [
+                "Theme"
+              ],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "context",
+              "detail": "a context value it reads changed identity",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [
+                "Theme"
+              ],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 4,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "context-unstable-value",
+      "group": "context-value-identity",
+      "variant": "defeated",
+      "title": "A context value object rebuilt on every provider render",
+      "question": "Does an unrelated state change inside a provider re-render its consumers?",
+      "claim": "Unrelated state in the provider re-renders every consumer, because the value object is new even though the data in it is identical.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "SessionProvider",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Shell",
+          "parent": "SessionProvider",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "UserBadge",
+          "parent": "Shell",
+          "elementFrom": "Shell",
+          "memo": false,
+          "consumes": [
+            "Session"
+          ]
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "context-unstable-value",
+          "actionId": "tick",
+          "actionLabel": "set unrelated state in SessionProvider",
+          "owner": "SessionProvider",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "SessionProvider",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Shell",
+              "parent": "SessionProvider",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "element-identity",
+              "detail": "React saw the same element object it already had and bailed out",
+              "propsChanged": []
+            },
+            {
+              "name": "UserBadge",
+              "parent": "Shell",
+              "elementFrom": "Shell",
+              "memo": false,
+              "consumes": [
+                "Session"
+              ],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "context",
+              "detail": "a context value it reads changed identity",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [
+                "Session"
+              ],
+              "readsUnchanged": [
+                "user"
+              ],
+              "memoWouldHelp": false
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 4,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "context-memo-value",
+      "group": "context-value-identity",
+      "variant": "works",
+      "title": "The same provider with useMemo around the value",
+      "question": "Does an unrelated state change inside a provider re-render its consumers?",
+      "claim": "The provider re-renders, its consumers do not.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "SessionProvider",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Shell",
+          "parent": "SessionProvider",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "UserBadge",
+          "parent": "Shell",
+          "elementFrom": "Shell",
+          "memo": false,
+          "consumes": [
+            "Session"
+          ]
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "context-memo-value",
+          "actionId": "tick",
+          "actionLabel": "set unrelated state in SessionProvider",
+          "owner": "SessionProvider",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "SessionProvider",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Shell",
+              "parent": "SessionProvider",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "element-identity",
+              "detail": "React saw the same element object it already had and bailed out",
+              "propsChanged": []
+            },
+            {
+              "name": "UserBadge",
+              "parent": "Shell",
+              "elementFrom": "Shell",
+              "memo": false,
+              "consumes": [
+                "Session"
+              ],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 4,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "children-as-prop",
+      "group": "children-bailout",
+      "variant": "works",
+      "title": "The child is passed in as children",
+      "question": "Can a child skip re-rendering with no React.memo, no useMemo and no useCallback?",
+      "claim": "Counter re-renders on every click and Expensive never re-renders, with no memo of any kind, because App did not re-render so the element object is the one React already has.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Counter",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Expensive",
+          "parent": "Counter",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "children-as-prop",
+          "actionId": "bump",
+          "actionLabel": "set count in Counter",
+          "owner": "Counter",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Counter",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Expensive",
+              "parent": "Counter",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "element-identity",
+              "detail": "React saw the same element object it already had and bailed out",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "children-inline",
+      "group": "children-bailout",
+      "variant": "defeated",
+      "title": "The same tree with the child created inside Counter",
+      "question": "Can a child skip re-rendering with no React.memo, no useMemo and no useCallback?",
+      "claim": "Moving one JSX element re-renders Expensive on every click.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Counter",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Expensive",
+          "parent": "Counter",
+          "elementFrom": "Counter",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "children-inline",
+          "actionId": "bump",
+          "actionLabel": "set count in Counter",
+          "owner": "Counter",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Counter",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Expensive",
+              "parent": "Counter",
+              "elementFrom": "Counter",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-children-inline",
+      "group": "memo-with-children",
+      "variant": "defeated",
+      "title": "React.memo on a wrapper with inline children",
+      "question": "Does React.memo help a wrapper component that takes children?",
+      "claim": "The children prop is a new element object every render, so the memo never bails out and the whole subtree re-renders.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoPanel",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        },
+        {
+          "name": "Expensive",
+          "parent": "MemoPanel",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-children-inline",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "props-changed",
+              "detail": "React.memo compared props and found a change",
+              "propsChanged": [
+                "children"
+              ],
+              "propsDetail": [
+                {
+                  "key": "children",
+                  "before": "object",
+                  "after": "object",
+                  "sameContent": false
+                }
+              ],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            },
+            {
+              "name": "Expensive",
+              "parent": "MemoPanel",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 3,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-children-hoisted",
+      "group": "memo-with-children",
+      "variant": "works",
+      "title": "The same wrapper with the children element held stable",
+      "question": "Does React.memo help a wrapper component that takes children?",
+      "claim": "With the children element kept in a useMemo, MemoPanel and everything under it skip.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoPanel",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        },
+        {
+          "name": "Expensive",
+          "parent": "MemoPanel",
+          "elementFrom": "(hoisted)",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-children-hoisted",
+          "actionId": "bump",
+          "actionLabel": "set count in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoPanel",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            },
+            {
+              "name": "Expensive",
+              "parent": "MemoPanel",
+              "elementFrom": "(hoisted)",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-blocks-parent-state",
+      "group": "memo-vs-context",
+      "variant": "works",
+      "title": "React.memo blocking a parent state change",
+      "question": "Does a React.memo boundary with unchanged props protect the subtree under it?",
+      "claim": "App re-renders, MemoSection and ThemeReader do not.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoSection",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        },
+        {
+          "name": "ThemeReader",
+          "parent": "MemoSection",
+          "elementFrom": "MemoSection",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-blocks-parent-state",
+          "actionId": "change",
+          "actionLabel": "set unrelated state in App",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoSection",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            },
+            {
+              "name": "ThemeReader",
+              "parent": "MemoSection",
+              "elementFrom": "MemoSection",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": false,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "memo-does-not-block-context",
+      "group": "memo-vs-context",
+      "variant": "defeated",
+      "title": "The same memo boundary with a context read below it",
+      "question": "Does a React.memo boundary with unchanged props protect the subtree under it?",
+      "claim": "MemoSection still bails out, and ThemeReader underneath it re-renders anyway. A context update reaches a consumer through a memo boundary that did not re-render.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "MemoSection",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": true,
+          "consumes": []
+        },
+        {
+          "name": "ThemeReader",
+          "parent": "MemoSection",
+          "elementFrom": "MemoSection",
+          "memo": false,
+          "consumes": [
+            "Theme"
+          ]
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "memo-does-not-block-context",
+          "actionId": "change",
+          "actionLabel": "change the theme in context",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "MemoSection",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": true,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "memo-bailout",
+              "detail": "React.memo compared props and found them all equal",
+              "propsChanged": []
+            },
+            {
+              "name": "ThemeReader",
+              "parent": "MemoSection",
+              "elementFrom": "MemoSection",
+              "memo": false,
+              "consumes": [
+                "Theme"
+              ],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "context",
+              "detail": "a context value it reads changed identity",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [
+                "Theme"
+              ],
+              "readsUnchanged": [],
+              "memoWouldHelp": false
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "setstate-same-value",
+      "group": "setstate-same-value",
+      "variant": "control",
+      "title": "setState with the value it already has",
+      "question": "What happens when you set state to the value it already holds?",
+      "claim": "React compares the new state to the old one. The measured render count for App is the interesting number here, and it is not always zero.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Child",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "setstate-same-value",
+          "actionId": "set",
+          "actionLabel": "setCount(0) when count is already 0",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "state-bailout",
+              "detail": "React compared the new state to the current state, found them equal, and did not render at all",
+              "propsChanged": []
+            },
+            {
+              "name": "Child",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": false,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 0,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "setstate-new-value",
+      "group": "setstate-same-value",
+      "variant": "control",
+      "title": "The same setState with a genuinely new value",
+      "question": "What happens when you set state to the value it already holds?",
+      "claim": "App and Child both render once.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Child",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "setstate-new-value",
+          "actionId": "set",
+          "actionLabel": "setCount(1) when count is 0",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Child",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "parent-render",
+              "detail": "the component that renders it re-rendered",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": true
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 2,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "setstate-net-zero",
+      "group": "setstate-same-value",
+      "variant": "control",
+      "title": "Two updates in one event that cancel out",
+      "question": "Does an unchanged final state always mean no render?",
+      "claim": "The measured render count for App here is the point of this scenario, and it differs from the plain same-value case above.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Child",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "setstate-net-zero",
+          "actionId": "set",
+          "actionLabel": "setCount(c => c + 1) then setCount(c => c - 1)",
+          "owner": "App",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            },
+            {
+              "name": "Child",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "render-then-bailout",
+              "detail": "React re-rendered its parent because it could not know the result in advance, found the state unchanged, and reused the whole subtree instead of descending",
+              "propsChanged": []
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": false,
+          "ownerStateUnchanged": true,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 2,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    },
+    {
+      "id": "state-in-leaf",
+      "group": "state-locality",
+      "variant": "control",
+      "title": "State pushed down into the leaf that uses it",
+      "question": "What does moving state downwards actually buy?",
+      "claim": "Only the leaf re-renders. Its parent and its sibling do not.",
+      "nodes": [
+        {
+          "name": "App",
+          "parent": null,
+          "elementFrom": null,
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "Sibling",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        },
+        {
+          "name": "LeafCounter",
+          "parent": "App",
+          "elementFrom": "App",
+          "memo": false,
+          "consumes": []
+        }
+      ],
+      "runs": [
+        {
+          "scenarioId": "state-in-leaf",
+          "actionId": "bump",
+          "actionLabel": "set count in LeafCounter",
+          "owner": "LeafCounter",
+          "stray": [],
+          "nodes": [
+            {
+              "name": "App",
+              "parent": null,
+              "elementFrom": null,
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "above-the-update",
+              "detail": "the state that changed lives below it, and React only re-renders downwards",
+              "propsChanged": []
+            },
+            {
+              "name": "Sibling",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 0,
+              "rendered": false,
+              "reason": "ancestor-skipped",
+              "detail": "its parent did not re-render, so React never reached it",
+              "propsChanged": []
+            },
+            {
+              "name": "LeafCounter",
+              "parent": "App",
+              "elementFrom": "App",
+              "memo": false,
+              "consumes": [],
+              "mountRenders": 1,
+              "renderCount": 1,
+              "rendered": true,
+              "reason": "state",
+              "detail": "its own state changed",
+              "propsChanged": [],
+              "propsDetail": [],
+              "contextChanged": [],
+              "readsUnchanged": [],
+              "memoWouldHelp": null
+            }
+          ],
+          "counters": {},
+          "countersAfterMount": {},
+          "domChanged": true,
+          "ownerStateUnchanged": false,
+          "totalUpdateRenders": 1,
+          "totalMountRenders": 3,
+          "unexplained": [],
+          "orphanNodeCheck": []
+        }
+      ]
+    }
+  ]
+}
