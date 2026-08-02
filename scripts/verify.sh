@@ -123,6 +123,30 @@ else
 fi
 echo
 
+echo "6b. the page is self-contained"
+selfcontained=0
+head -3 docs/index.html | grep -qi '^<!doctype html>' || { bad "docs/index.html has no doctype"; selfcontained=1; }
+grep -q '<meta charset="utf-8">' docs/index.html || { bad "docs/index.html has no charset"; selfcontained=1; }
+grep -q '<meta name="viewport" content="width=device-width' docs/index.html || { bad "docs/index.html has no viewport"; selfcontained=1; }
+# Any request to another host would make the page depend on the network. There must be none.
+if grep -nEo '(src|href)="[^"]*"' docs/index.html | grep -vE '="#' | grep -q .; then
+  bad "docs/index.html references an external resource"
+  grep -nEo '(src|href)="[^"]*"' docs/index.html | head -5 | sed 's/^/        /'
+  selfcontained=1
+fi
+if grep -qE '<link |@import|https?://' docs/index.html; then
+  bad "docs/index.html pulls in an external stylesheet, font or URL"
+  grep -nE '<link |@import|https?://' docs/index.html | head -5 | sed 's/^/        /'
+  selfcontained=1
+fi
+# body { overflow-x: hidden } masks real overflow and makes the browser probe vacuous.
+if grep -qE 'overflow-x:\s*hidden' docs/index.html; then
+  bad "docs/index.html hedges against overflow with overflow-x: hidden"
+  selfcontained=1
+fi
+[ "$selfcontained" = "0" ] && ok "doctype, charset, viewport, no external resources, no overflow-x: hidden"
+echo
+
 echo "7. the page in a real browser"
 if node scripts/check-page.mjs >"$TMP/page.log" 2>&1; then
   ok "$(grep 'browser check' "$TMP/page.log")"

@@ -378,6 +378,8 @@ function contextGranularityScenario({ id, variant, title, claim, split }) {
       const UserContext = React.createContext(null);
       const ThemeContext = React.createContext(null);
 
+      // `split` is fixed for the lifetime of this scenario, so the hook order is stable across
+      // every render even though the useContext call sits inside a branch.
       const UserBadge = comp('UserBadge', (props) => {
         if (split) {
           const user = React.useContext(UserContext);
@@ -636,6 +638,7 @@ function memoContextScenario({ id, variant, title, claim, viaContext }) {
       const handles = {};
       const counters = {};
       const ThemeContext = React.createContext('light');
+      // Same as above: `viaContext` is constant per scenario, so the hook order never varies.
       const ThemeReader = comp('ThemeReader', (props) => {
         if (viaContext) {
           const theme = React.useContext(ThemeContext);

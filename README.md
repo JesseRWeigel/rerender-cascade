@@ -175,9 +175,12 @@ rerender-cascade verification
 6. the page is generated from the recording
   ok    docs/index.html matches data/cascades.json (124 verdicts)
 
+6b. the page is self-contained
+  ok    doctype, charset, viewport, no external resources, no overflow-x: hidden
+
 7. the page in a real browser
   ok    browser check: 21 passed, 0 failed
-      ok    port 46175 is serving this project's page
+      ok    port 45113 is serving this project's page
       ok    390px: no element overflows the page
       ok    the inline script parsed and ran to the end
       ok    the script counted 53 measured re-renders, matching the recording
@@ -217,7 +220,7 @@ rerender-cascade verification
   ok    no credential-shaped strings in tracked files
   ok    no tracked file contains a NUL byte, so the scans above could read all of them
   ok    node_modules is not tracked
-  ok    no tracked file is over 1 MB (22 files, 408 KB total)
+  ok    no tracked file is over 1 MB (22 files, 412 KB total)
 
 10. the README block regenerates from the recording
   ok    README.md measured block matches the recording (9 paired cases)
@@ -232,7 +235,7 @@ rerender-cascade verification
   ok    README states "React 19.2.8"
   ok    README states "10 sabotage"
 
-26 passed, 0 failed
+27 passed, 0 failed
 rerender-cascade verification passed
 ```
 

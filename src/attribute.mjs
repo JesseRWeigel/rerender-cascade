@@ -210,8 +210,5 @@ export function attribute(scenario, run) {
     totalUpdateRenders: run.update.renders.length,
     totalMountRenders: run.mount.renders.length,
     unexplained: results.filter((r) => r.reason === 'unexplained').map((r) => r.name),
-    orphanNodeCheck: scenario.nodes
-      .filter((n) => n.parent && !nodeByName.has(n.parent))
-      .map((n) => n.name),
   };
 }
