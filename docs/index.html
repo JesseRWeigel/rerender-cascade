@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rerender-cascade</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --panel: #f5f6f8;
+  --panel-2: #eceef2;
+  --ink: #14171c;
+  --muted: #5a6472;
+  --line: #d3d8e0;
+  --render: #b02a37;
+  --render-bg: #fdecee;
+  --skip: #1a6b3c;
+  --skip-bg: #e8f5ec;
+  --accent: #2f5fd0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1218;
+    --panel: #171b23;
+    --panel-2: #1e232d;
+    --ink: #e6e9ee;
+    --muted: #9aa4b2;
+    --line: #2b323d;
+    --render: #ff9aa3;
+    --render-bg: #35191d;
+    --skip: #86e0ab;
+    --skip-bg: #10291c;
+    --accent: #86aaff;
+  }
+}
+/* The viewer's toggle is written onto the root element and must win in both directions, so these
+   come last and are not wrapped in a media query. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff; --panel: #f5f6f8; --panel-2: #eceef2; --ink: #14171c; --muted: #5a6472;
+  --line: #d3d8e0; --render: #b02a37; --render-bg: #fdecee; --skip: #1a6b3c; --skip-bg: #e8f5ec;
+  --accent: #2f5fd0;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1218; --panel: #171b23; --panel-2: #1e232d; --ink: #e6e9ee; --muted: #9aa4b2;
+  --line: #2b323d; --render: #ff9aa3; --render-bg: #35191d; --skip: #86e0ab; --skip-bg: #10291c;
+  --accent: #86aaff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+code, .num, .n { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.wrap { max-width: 62rem; margin: 0 auto; padding: 1.25rem 1rem 4rem; }
+h1 { font-size: 1.6rem; margin: 0 0 .35rem; letter-spacing: -.01em; }
+h2 { font-size: 1.15rem; margin: 2.4rem 0 .5rem; }
+h3 { font-size: 1rem; margin: 0 0 .35rem; }
+p { margin: .5rem 0; }
+.lede { color: var(--muted); max-width: 46rem; }
+.topbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline; justify-content: space-between; }
+button { font: inherit; cursor: pointer; }
+.toggle {
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+  border-radius: .5rem; padding: .3rem .7rem;
+}
+.stats { display: flex; flex-wrap: wrap; gap: .4rem; margin: .9rem 0 0; padding: 0; list-style: none; }
+.stats li {
+  background: var(--panel); border: 1px solid var(--line); border-radius: .5rem;
+  padding: .3rem .6rem; font-size: .82rem; color: var(--muted);
+}
+.stats b { color: var(--ink); font-family: ui-monospace, monospace; }
+.cards { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: .7rem; padding: .85rem .9rem; min-width: 0; }
+.expectation { color: var(--muted); font-size: .87rem; margin: .1rem 0 .6rem; }
+.pair { margin: 0; }
+.pair .row { display: grid; grid-template-columns: 1fr; gap: .1rem; padding: .4rem .55rem; border-radius: .45rem; margin-bottom: .35rem; min-width: 0; }
+.pair dt { font-size: .78rem; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.pair dd { margin: 0; font-size: .87rem; min-width: 0; overflow-wrap: anywhere; }
+.pair .bad { background: var(--render-bg); }
+.pair .bad .n { color: var(--render); }
+.pair .good { background: var(--skip-bg); }
+.pair .good .n { color: var(--skip); }
+.why { display: block; color: var(--muted); font-size: .8rem; }
+.link { background: none; border: 0; color: var(--accent); padding: 0; text-decoration: underline; font-size: .85rem; }
+.jump { margin: .3rem 0 0; }
+.groupbar { display: flex; flex-wrap: wrap; gap: .35rem; margin: .6rem 0 1rem; padding: 0; }
+.groupbar button {
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 999px; padding: .25rem .7rem; font-size: .82rem;
+}
+.groupbar button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.variants { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr)); }
+.variant { background: var(--panel); border: 1px solid var(--line); border-radius: .7rem; padding: .85rem .9rem; min-width: 0; }
+.variant h3 { display: flex; flex-wrap: wrap; gap: .4rem; align-items: baseline; }
+.badge { font-size: .68rem; letter-spacing: .04em; text-transform: uppercase; border-radius: .35rem; padding: .1rem .4rem; border: 1px solid var(--line); color: var(--muted); }
+.badge.defeated { color: var(--render); border-color: var(--render); }
+.badge.works { color: var(--skip); border-color: var(--skip); }
+.claim { font-size: .87rem; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: .3rem; margin: .5rem 0 .6rem; }
+.actions button {
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: .45rem; padding: .22rem .55rem; font-size: .8rem;
+}
+.actions button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.tree { list-style: none; margin: 0; padding: 0; }
+.node { border-left: 3px solid transparent; padding: .32rem .5rem; border-radius: .3rem; margin-bottom: .22rem; min-width: 0; }
+.node.rendered { border-left-color: var(--render); background: var(--render-bg); }
+.node.skipped { border-left-color: var(--skip); background: var(--skip-bg); }
+.node .head { display: flex; flex-wrap: wrap; gap: .35rem; align-items: baseline; }
+.node .name { font-family: ui-monospace, monospace; font-size: .88rem; overflow-wrap: anywhere; }
+.node .count { font-family: ui-monospace, monospace; font-size: .78rem; }
+.node.rendered .count { color: var(--render); }
+.node.skipped .count { color: var(--skip); }
+.node .tag { font-size: .68rem; border: 1px solid var(--line); border-radius: .3rem; padding: 0 .25rem; color: var(--muted); }
+.node .cause { font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+.node .fact { font-size: .78rem; color: var(--muted); margin: .12rem 0 0; overflow-wrap: anywhere; }
+.node .fact b { color: var(--ink); font-weight: 600; }
+.foot { font-size: .82rem; color: var(--muted); margin-top: .5rem; }
+.scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: .6rem; }
+table { border-collapse: collapse; width: 100%; font-size: .82rem; }
+th, td { text-align: left; padding: .3rem .55rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { background: var(--panel-2); position: sticky; top: 0; }
+td.num { text-align: right; font-family: ui-monospace, monospace; }
+footer { margin-top: 2.5rem; color: var(--muted); font-size: .85rem; }
+footer code { background: var(--panel); padding: .05rem .3rem; border-radius: .3rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="topbar">
+    <h1>React re-render cascade, measured</h1>
+    <button type="button" class="toggle" id="theme-toggle" aria-label="Switch colour theme">theme</button>
+  </div>
+  <p class="lede">
+    Every number on this page came out of running React 19.2.8 in Node, mounting the tree,
+    firing one state change, and counting which component functions React called. Nothing here is
+    written from memory, and each optimisation that is claimed to prevent a render is shown next to
+    a run where the same optimisation does not.
+  </p>
+  <ul class="stats">
+    <li><b id="stat-scenarios">23</b> scenarios</li>
+    <li><b id="stat-actions">29</b> recorded state changes</li>
+    <li><b id="stat-noderuns">124</b> component verdicts</li>
+    <li><b id="stat-renders">53</b> measured re-renders</li>
+    <li><b id="stat-skips">71</b> measured skips</li>
+    <li>react-dom <b>19.2.8</b></li>
+  </ul>
+</header>
+
+<h2>Where the intuition is wrong</h2>
+<p class="lede">Each pair below differs by one line of code. The counts are the real ones.</p>
+<div class="cards">
+      <article class="card">
+        <h3>React.memo, defeated by one inline object</h3>
+        <p class="expectation">The memo is on the component either way. Adding style={{ padding: 8 }} at the call site turns it off.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>memo-inline-object</code></dt>
+            <dd><b>MemoToolbar</b> rendered <b class="n">1</b> time <span class="why">React.memo compared props and found a change</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>memo-stable-props</code></dt>
+            <dd><b>MemoToolbar</b> rendered <b class="n">0</b> times <span class="why">React.memo compared props and found them all equal</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="memo-prop-identity">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>React.memo, defeated by one inline arrow</h3>
+        <p class="expectation">The two functions have byte-identical source. React compares identity, not source.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>memo-inline-arrow</code></dt>
+            <dd><b>MemoButton</b> rendered <b class="n">1</b> time <span class="why">React.memo compared props and found a change</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>memo-usecallback</code></dt>
+            <dd><b>MemoButton</b> rendered <b class="n">0</b> times <span class="why">React.memo compared props and found them all equal</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="memo-callback-identity">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>useCallback that does nothing</h3>
+        <p class="expectation">An object in the dependency array is rebuilt every render, so the memoised callback is too.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>usecallback-unstable-dep</code></dt>
+            <dd><b>MemoButton</b> rendered <b class="n">1</b> time <span class="why">React.memo compared props and found a change</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>usecallback-primitive-dep</code></dt>
+            <dd><b>MemoButton</b> rendered <b class="n">0</b> times <span class="why">React.memo compared props and found them all equal</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="usecallback-deps">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>useMemo that never hits</h3>
+        <p class="expectation">The expensive function still runs on every render, and the memo below it still re-renders.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>usememo-unstable-dep</code></dt>
+            <dd><b>MemoTable</b> rendered <b class="n">1</b> time <span class="why">React.memo compared props and found a change</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>usememo-primitive-dep</code></dt>
+            <dd><b>MemoTable</b> rendered <b class="n">0</b> times <span class="why">React.memo compared props and found them all equal</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="usememo-deps">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>A context consumer that does not use the field that changed</h3>
+        <p class="expectation">UserBadge reads session.user and only the theme changed. It re-renders anyway.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>context-single-object</code></dt>
+            <dd><b>UserBadge</b> rendered <b class="n">1</b> time <span class="why">a context value it reads changed identity</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>context-split</code></dt>
+            <dd><b>UserBadge</b> rendered <b class="n">0</b> times <span class="why">its parent did not re-render, so React never reached it</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="context-granularity">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>Unrelated state inside a provider</h3>
+        <p class="expectation">The data in the context never changed. Only the object wrapping it did.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>context-unstable-value</code></dt>
+            <dd><b>UserBadge</b> rendered <b class="n">1</b> time <span class="why">a context value it reads changed identity</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>context-memo-value</code></dt>
+            <dd><b>UserBadge</b> rendered <b class="n">0</b> times <span class="why">its parent did not re-render, so React never reached it</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="context-value-identity">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>A child that skips with no memo at all</h3>
+        <p class="expectation">Same components, same state, same click. The difference is which component creates the element.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>children-inline</code></dt>
+            <dd><b>Expensive</b> rendered <b class="n">1</b> time <span class="why">the component that renders it re-rendered</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>children-as-prop</code></dt>
+            <dd><b>Expensive</b> rendered <b class="n">0</b> times <span class="why">React saw the same element object it already had and bailed out</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="children-bailout">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>React.memo on a wrapper that takes children</h3>
+        <p class="expectation">children is a prop, and inline JSX makes a new element object every render.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>memo-children-inline</code></dt>
+            <dd><b>MemoPanel</b> rendered <b class="n">1</b> time <span class="why">React.memo compared props and found a change</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>memo-children-hoisted</code></dt>
+            <dd><b>MemoPanel</b> rendered <b class="n">0</b> times <span class="why">React.memo compared props and found them all equal</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="memo-with-children">open both runs</button></p>
+      </article>
+      <article class="card">
+        <h3>React.memo does not stop a context update</h3>
+        <p class="expectation">The memo boundary bails out and the component underneath it renders anyway. The update jumps the boundary.</p>
+        <dl class="pair">
+          <div class="row bad">
+            <dt><code>memo-does-not-block-context</code></dt>
+            <dd><b>ThemeReader</b> rendered <b class="n">1</b> time <span class="why">a context value it reads changed identity</span></dd>
+          </div>
+          <div class="row good">
+            <dt><code>memo-blocks-parent-state</code></dt>
+            <dd><b>ThemeReader</b> rendered <b class="n">0</b> times <span class="why">its parent did not re-render, so React never reached it</span></dd>
+          </div>
+        </dl>
+        <p class="jump"><button type="button" class="link" data-goto="memo-vs-context">open both runs</button></p>
+      </article>
+</div>
+
+<h2>Every scenario, side by side</h2>
+<p class="lede">Pick a case. Red means React called the component function; green means it did not.</p>
+<div class="groupbar" id="groupbar" role="group" aria-label="scenario groups"></div>
+<div class="variants" id="variants"></div>
+<p class="foot" id="explorer-foot"></p>
+
+<h2>Every measurement</h2>
+<p class="lede">All 124 component verdicts, one row each.</p>
+<div class="scroller">
+  <table id="all-measurements">
+    <thead><tr><th>scenario</th><th>action</th><th>component</th><th>renders</th><th>why</th></tr></thead>
+    <tbody>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>Header</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>Sidebar</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>SidebarNav</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>SidebarStats</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>Main</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>PanelBody</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>app</td>
+          <td><code>Footer</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>Header</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>Sidebar</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>SidebarNav</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>SidebarStats</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>Main</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>PanelBody</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebar</td>
+          <td><code>Footer</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>Header</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>Sidebar</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>SidebarNav</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>SidebarStats</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>Main</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>PanelBody</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>sidebarnav</td>
+          <td><code>Footer</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>Header</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>Sidebar</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>SidebarNav</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>SidebarStats</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>Main</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>PanelBody</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>main</td>
+          <td><code>Footer</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>Header</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>Sidebar</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>SidebarNav</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>SidebarStats</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>Main</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>PanelBody</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>memopanel</td>
+          <td><code>Footer</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>Header</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>Sidebar</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>SidebarNav</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>SidebarStats</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>Main</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>PanelBody</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>panelbody</td>
+          <td><code>Footer</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>Header</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>Sidebar</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>SidebarNav</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>SidebarStats</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>Main</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>PanelBody</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>tree-explorer</code></td>
+          <td>footer</td>
+          <td><code>Footer</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-stable-props</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-stable-props</code></td>
+          <td>bump</td>
+          <td><code>MemoToolbar</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>memo-stable-props</code></td>
+          <td>bump</td>
+          <td><code>PlainLabel</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>memo-inline-object</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-inline-object</code></td>
+          <td>bump</td>
+          <td><code>MemoToolbar</code></td>
+          <td class="num">1</td>
+          <td>props-changed</td>
+        </tr>
+        <tr>
+          <td><code>memo-inline-object</code></td>
+          <td>bump</td>
+          <td><code>PlainLabel</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>memo-inline-arrow</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-inline-arrow</code></td>
+          <td>bump</td>
+          <td><code>MemoButton</code></td>
+          <td class="num">1</td>
+          <td>props-changed</td>
+        </tr>
+        <tr>
+          <td><code>memo-usecallback</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-usecallback</code></td>
+          <td>bump</td>
+          <td><code>MemoButton</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>usecallback-unstable-dep</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>usecallback-unstable-dep</code></td>
+          <td>bump</td>
+          <td><code>MemoButton</code></td>
+          <td class="num">1</td>
+          <td>props-changed</td>
+        </tr>
+        <tr>
+          <td><code>usecallback-primitive-dep</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>usecallback-primitive-dep</code></td>
+          <td>bump</td>
+          <td><code>MemoButton</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>usememo-unstable-dep</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>usememo-unstable-dep</code></td>
+          <td>bump</td>
+          <td><code>MemoTable</code></td>
+          <td class="num">1</td>
+          <td>props-changed</td>
+        </tr>
+        <tr>
+          <td><code>usememo-primitive-dep</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>usememo-primitive-dep</code></td>
+          <td>bump</td>
+          <td><code>MemoTable</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>context-single-object</code></td>
+          <td>theme</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>context-single-object</code></td>
+          <td>theme</td>
+          <td><code>Shell</code></td>
+          <td class="num">0</td>
+          <td>element-identity</td>
+        </tr>
+        <tr>
+          <td><code>context-single-object</code></td>
+          <td>theme</td>
+          <td><code>UserBadge</code></td>
+          <td class="num">1</td>
+          <td>context</td>
+        </tr>
+        <tr>
+          <td><code>context-single-object</code></td>
+          <td>theme</td>
+          <td><code>ThemeSwitch</code></td>
+          <td class="num">1</td>
+          <td>context</td>
+        </tr>
+        <tr>
+          <td><code>context-split</code></td>
+          <td>theme</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>context-split</code></td>
+          <td>theme</td>
+          <td><code>Shell</code></td>
+          <td class="num">0</td>
+          <td>element-identity</td>
+        </tr>
+        <tr>
+          <td><code>context-split</code></td>
+          <td>theme</td>
+          <td><code>UserBadge</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>context-split</code></td>
+          <td>theme</td>
+          <td><code>ThemeSwitch</code></td>
+          <td class="num">1</td>
+          <td>context</td>
+        </tr>
+        <tr>
+          <td><code>context-unstable-value</code></td>
+          <td>tick</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>context-unstable-value</code></td>
+          <td>tick</td>
+          <td><code>SessionProvider</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>context-unstable-value</code></td>
+          <td>tick</td>
+          <td><code>Shell</code></td>
+          <td class="num">0</td>
+          <td>element-identity</td>
+        </tr>
+        <tr>
+          <td><code>context-unstable-value</code></td>
+          <td>tick</td>
+          <td><code>UserBadge</code></td>
+          <td class="num">1</td>
+          <td>context</td>
+        </tr>
+        <tr>
+          <td><code>context-memo-value</code></td>
+          <td>tick</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>context-memo-value</code></td>
+          <td>tick</td>
+          <td><code>SessionProvider</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>context-memo-value</code></td>
+          <td>tick</td>
+          <td><code>Shell</code></td>
+          <td class="num">0</td>
+          <td>element-identity</td>
+        </tr>
+        <tr>
+          <td><code>context-memo-value</code></td>
+          <td>tick</td>
+          <td><code>UserBadge</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>children-as-prop</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>children-as-prop</code></td>
+          <td>bump</td>
+          <td><code>Counter</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>children-as-prop</code></td>
+          <td>bump</td>
+          <td><code>Expensive</code></td>
+          <td class="num">0</td>
+          <td>element-identity</td>
+        </tr>
+        <tr>
+          <td><code>children-inline</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>children-inline</code></td>
+          <td>bump</td>
+          <td><code>Counter</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>children-inline</code></td>
+          <td>bump</td>
+          <td><code>Expensive</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>memo-children-inline</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-children-inline</code></td>
+          <td>bump</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">1</td>
+          <td>props-changed</td>
+        </tr>
+        <tr>
+          <td><code>memo-children-inline</code></td>
+          <td>bump</td>
+          <td><code>Expensive</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>memo-children-hoisted</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-children-hoisted</code></td>
+          <td>bump</td>
+          <td><code>MemoPanel</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>memo-children-hoisted</code></td>
+          <td>bump</td>
+          <td><code>Expensive</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>memo-blocks-parent-state</code></td>
+          <td>change</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-blocks-parent-state</code></td>
+          <td>change</td>
+          <td><code>MemoSection</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>memo-blocks-parent-state</code></td>
+          <td>change</td>
+          <td><code>ThemeReader</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>memo-does-not-block-context</code></td>
+          <td>change</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>memo-does-not-block-context</code></td>
+          <td>change</td>
+          <td><code>MemoSection</code></td>
+          <td class="num">0</td>
+          <td>memo-bailout</td>
+        </tr>
+        <tr>
+          <td><code>memo-does-not-block-context</code></td>
+          <td>change</td>
+          <td><code>ThemeReader</code></td>
+          <td class="num">1</td>
+          <td>context</td>
+        </tr>
+        <tr>
+          <td><code>setstate-same-value</code></td>
+          <td>set</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>state-bailout</td>
+        </tr>
+        <tr>
+          <td><code>setstate-same-value</code></td>
+          <td>set</td>
+          <td><code>Child</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>setstate-new-value</code></td>
+          <td>set</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>setstate-new-value</code></td>
+          <td>set</td>
+          <td><code>Child</code></td>
+          <td class="num">1</td>
+          <td>parent-render</td>
+        </tr>
+        <tr>
+          <td><code>setstate-net-zero</code></td>
+          <td>set</td>
+          <td><code>App</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+        <tr>
+          <td><code>setstate-net-zero</code></td>
+          <td>set</td>
+          <td><code>Child</code></td>
+          <td class="num">0</td>
+          <td>render-then-bailout</td>
+        </tr>
+        <tr>
+          <td><code>state-in-leaf</code></td>
+          <td>bump</td>
+          <td><code>App</code></td>
+          <td class="num">0</td>
+          <td>above-the-update</td>
+        </tr>
+        <tr>
+          <td><code>state-in-leaf</code></td>
+          <td>bump</td>
+          <td><code>Sibling</code></td>
+          <td class="num">0</td>
+          <td>ancestor-skipped</td>
+        </tr>
+        <tr>
+          <td><code>state-in-leaf</code></td>
+          <td>bump</td>
+          <td><code>LeafCounter</code></td>
+          <td class="num">1</td>
+          <td>state</td>
+        </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  <p>
+    Regenerate everything with <code>node scripts/record.mjs &amp;&amp; node scripts/build-docs.mjs</code>.
+    <code>bash scripts/verify.sh</code> re-runs React, recounts every render off React's own fiber
+    flags with code that shares nothing with the instrumentation, and fails if this page and the
+    measurements disagree.
+  </p>
+</footer>
+</div>
+<script id="cascade-data" type="application/json">{"react":"19.2.8","reactDom":"19.2.8","totals":{"scenarios":23,"actions":29,"nodeRuns":124,"renders":53,"skips":71},"groups":[{"id":"explorer","scenarios":[{"id":"tree-explorer","variant":"control","title":"Trigger a state change at any node","question":"Where does an update actually travel when you set state at an arbitrary node?","claim":"A state change renders the owning component and everything below it, and nothing above or beside it, except where a React.memo boundary with unchanged props stops it.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Header","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"Sidebar","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"SidebarNav","parent":"Sidebar","elementFrom":"Sidebar","memo":false,"consumes":[]},{"name":"SidebarStats","parent":"Sidebar","elementFrom":"Sidebar","memo":false,"consumes":[]},{"name":"Main","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"MemoPanel","parent":"Main","elementFrom":"Main","memo":true,"consumes":[]},{"name":"PanelBody","parent":"MemoPanel","elementFrom":"MemoPanel","memo":false,"consumes":[]},{"name":"Footer","parent":"Main","elementFrom":"Main","memo":false,"consumes":[]}],"runs":[{"actionId":"app","actionLabel":"set state in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Header","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"Sidebar","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"SidebarNav","parent":"Sidebar","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"SidebarStats","parent":"Sidebar","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"Main","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"MemoPanel","parent":"Main","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PanelBody","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Footer","parent":"Main","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true}]},{"actionId":"sidebar","actionLabel":"set state in Sidebar","owner":"Sidebar","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Header","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Sidebar","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarNav","parent":"Sidebar","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"SidebarStats","parent":"Sidebar","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"Main","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"Main","memo":true,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PanelBody","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Footer","parent":"Main","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]},{"actionId":"sidebarnav","actionLabel":"set state in SidebarNav","owner":"SidebarNav","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Header","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Sidebar","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarNav","parent":"Sidebar","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarStats","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Main","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"Main","memo":true,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PanelBody","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Footer","parent":"Main","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]},{"actionId":"main","actionLabel":"set state in Main","owner":"Main","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Header","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Sidebar","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarNav","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarStats","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Main","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"Main","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PanelBody","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Footer","parent":"Main","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true}]},{"actionId":"memopanel","actionLabel":"set state in MemoPanel","owner":"MemoPanel","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Header","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Sidebar","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarNav","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarStats","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Main","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"Main","memo":true,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PanelBody","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true},{"name":"Footer","parent":"Main","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]},{"actionId":"panelbody","actionLabel":"set state in PanelBody","owner":"PanelBody","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Header","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Sidebar","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarNav","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarStats","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Main","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"Main","memo":true,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PanelBody","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Footer","parent":"Main","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]},{"actionId":"footer","actionLabel":"set state in Footer","owner":"Footer","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Header","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Sidebar","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarNav","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SidebarStats","parent":"Sidebar","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Main","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"Main","memo":true,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PanelBody","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Footer","parent":"Main","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]},{"id":"memo-prop-identity","scenarios":[{"id":"memo-stable-props","variant":"works","title":"React.memo with only primitive props","question":"Does React.memo stop the child re-rendering when the parent re-renders?","claim":"MemoToolbar does not re-render when App re-renders, because every prop is === to last time.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoToolbar","parent":"App","elementFrom":"App","memo":true,"consumes":[]},{"name":"PlainLabel","parent":"App","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoToolbar","parent":"App","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"PlainLabel","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true}]}]},{"id":"memo-inline-object","variant":"defeated","title":"React.memo defeated by an inline object prop","question":"Does React.memo stop the child re-rendering when the parent re-renders?","claim":"Adding style={{ padding: 8 }} makes MemoToolbar re-render on every parent render. The memo is still there and does nothing.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoToolbar","parent":"App","elementFrom":"App","memo":true,"consumes":[]},{"name":"PlainLabel","parent":"App","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoToolbar","parent":"App","memo":true,"consumes":[],"renderCount":1,"reason":"props-changed","detail":"React.memo compared props and found a change","propsChanged":["style"],"propsDetail":[{"key":"style","before":"object","after":"object","sameContent":true}],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":false},{"name":"PlainLabel","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true}]}]}]},{"id":"memo-callback-identity","scenarios":[{"id":"memo-inline-arrow","variant":"defeated","title":"React.memo defeated by an inline arrow function","question":"Does passing a function to a memoised child break the memo?","claim":"A fresh arrow function every render is a changed prop, so MemoButton re-renders every time.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoButton","parent":"App","elementFrom":"App","memo":true,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoButton","parent":"App","memo":true,"consumes":[],"renderCount":1,"reason":"props-changed","detail":"React.memo compared props and found a change","propsChanged":["onSave"],"propsDetail":[{"key":"onSave","before":"function","after":"function","sameContent":true}],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":false}]}]},{"id":"memo-usecallback","variant":"works","title":"useCallback with an empty dependency array","question":"Does passing a function to a memoised child break the memo?","claim":"The same function identity every render, so MemoButton skips its render.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoButton","parent":"App","elementFrom":"App","memo":true,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoButton","parent":"App","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]},{"id":"usecallback-deps","scenarios":[{"id":"usecallback-unstable-dep","variant":"defeated","title":"useCallback with an object in the dependency array","question":"Does wrapping a handler in useCallback guarantee a stable identity?","claim":"The dependency is a fresh object every render, so useCallback returns a fresh function every render and the memo below it never bails out.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoButton","parent":"App","elementFrom":"App","memo":true,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoButton","parent":"App","memo":true,"consumes":[],"renderCount":1,"reason":"props-changed","detail":"React.memo compared props and found a change","propsChanged":["onSave"],"propsDetail":[{"key":"onSave","before":"function","after":"function","sameContent":true}],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":false}]}]},{"id":"usecallback-primitive-dep","variant":"works","title":"The same useCallback with a primitive dependency","question":"Does wrapping a handler in useCallback guarantee a stable identity?","claim":"One character of difference in the dependency array and MemoButton stops re-rendering.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoButton","parent":"App","elementFrom":"App","memo":true,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoButton","parent":"App","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]},{"id":"usememo-deps","scenarios":[{"id":"usememo-unstable-dep","variant":"defeated","title":"useMemo with a freshly built object in the dependency array","question":"Does useMemo stop the expensive work re-running?","claim":"The memo never hits: the expensive function runs on every render and its result is a new array, so MemoTable re-renders too.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoTable","parent":"App","elementFrom":"App","memo":true,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{"filterRuns":2},"countersAfterMount":{"filterRuns":1},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoTable","parent":"App","memo":true,"consumes":[],"renderCount":1,"reason":"props-changed","detail":"React.memo compared props and found a change","propsChanged":["rows"],"propsDetail":[{"key":"rows","before":"array(3)","after":"array(3)","sameContent":true}],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":false}]}]},{"id":"usememo-primitive-dep","variant":"works","title":"The same useMemo once the dependency is stable","question":"Does useMemo stop the expensive work re-running?","claim":"The expensive function runs once, the result keeps its identity, and MemoTable skips.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoTable","parent":"App","elementFrom":"App","memo":true,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{"filterRuns":1},"countersAfterMount":{"filterRuns":1},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoTable","parent":"App","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]},{"id":"context-granularity","scenarios":[{"id":"context-single-object","variant":"defeated","title":"One context object holding two unrelated fields","question":"Does a component that reads only ctx.user re-render when only ctx.theme changes?","claim":"UserBadge re-renders on a theme change even though session.user is the same object it already had.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Shell","parent":"App","elementFrom":"(hoisted)","memo":false,"consumes":[]},{"name":"UserBadge","parent":"Shell","elementFrom":"Shell","memo":false,"consumes":["Session"]},{"name":"ThemeSwitch","parent":"Shell","elementFrom":"Shell","memo":false,"consumes":["Session"]}],"runs":[{"actionId":"theme","actionLabel":"change only the theme","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Shell","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"element-identity","detail":"React saw the same element object it already had and bailed out","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"UserBadge","parent":"Shell","memo":false,"consumes":["Session"],"renderCount":1,"reason":"context","detail":"a context value it reads changed identity","propsChanged":[],"propsDetail":[],"contextChanged":["Session"],"readsUnchanged":["user"],"memoWouldHelp":false},{"name":"ThemeSwitch","parent":"Shell","memo":false,"consumes":["Session"],"renderCount":1,"reason":"context","detail":"a context value it reads changed identity","propsChanged":[],"propsDetail":[],"contextChanged":["Session"],"readsUnchanged":[],"memoWouldHelp":false}]}]},{"id":"context-split","variant":"works","title":"The same tree with the context split in two","question":"Does a component that reads only ctx.user re-render when only ctx.theme changes?","claim":"UserBadge does not re-render on a theme change.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Shell","parent":"App","elementFrom":"(hoisted)","memo":false,"consumes":[]},{"name":"UserBadge","parent":"Shell","elementFrom":"Shell","memo":false,"consumes":["User"]},{"name":"ThemeSwitch","parent":"Shell","elementFrom":"Shell","memo":false,"consumes":["Theme"]}],"runs":[{"actionId":"theme","actionLabel":"change only the theme","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Shell","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"element-identity","detail":"React saw the same element object it already had and bailed out","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"UserBadge","parent":"Shell","memo":false,"consumes":["User"],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"ThemeSwitch","parent":"Shell","memo":false,"consumes":["Theme"],"renderCount":1,"reason":"context","detail":"a context value it reads changed identity","propsChanged":[],"propsDetail":[],"contextChanged":["Theme"],"readsUnchanged":[],"memoWouldHelp":false}]}]}]},{"id":"context-value-identity","scenarios":[{"id":"context-unstable-value","variant":"defeated","title":"A context value object rebuilt on every provider render","question":"Does an unrelated state change inside a provider re-render its consumers?","claim":"Unrelated state in the provider re-renders every consumer, because the value object is new even though the data in it is identical.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"SessionProvider","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"Shell","parent":"SessionProvider","elementFrom":"App","memo":false,"consumes":[]},{"name":"UserBadge","parent":"Shell","elementFrom":"Shell","memo":false,"consumes":["Session"]}],"runs":[{"actionId":"tick","actionLabel":"set unrelated state in SessionProvider","owner":"SessionProvider","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SessionProvider","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Shell","parent":"SessionProvider","memo":false,"consumes":[],"renderCount":0,"reason":"element-identity","detail":"React saw the same element object it already had and bailed out","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"UserBadge","parent":"Shell","memo":false,"consumes":["Session"],"renderCount":1,"reason":"context","detail":"a context value it reads changed identity","propsChanged":[],"propsDetail":[],"contextChanged":["Session"],"readsUnchanged":["user"],"memoWouldHelp":false}]}]},{"id":"context-memo-value","variant":"works","title":"The same provider with useMemo around the value","question":"Does an unrelated state change inside a provider re-render its consumers?","claim":"The provider re-renders, its consumers do not.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"SessionProvider","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"Shell","parent":"SessionProvider","elementFrom":"App","memo":false,"consumes":[]},{"name":"UserBadge","parent":"Shell","elementFrom":"Shell","memo":false,"consumes":["Session"]}],"runs":[{"actionId":"tick","actionLabel":"set unrelated state in SessionProvider","owner":"SessionProvider","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"SessionProvider","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Shell","parent":"SessionProvider","memo":false,"consumes":[],"renderCount":0,"reason":"element-identity","detail":"React saw the same element object it already had and bailed out","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"UserBadge","parent":"Shell","memo":false,"consumes":["Session"],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]},{"id":"children-bailout","scenarios":[{"id":"children-as-prop","variant":"works","title":"The child is passed in as children","question":"Can a child skip re-rendering with no React.memo, no useMemo and no useCallback?","claim":"Counter re-renders on every click and Expensive never re-renders, with no memo of any kind, because App did not re-render so the element object is the one React already has.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Counter","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"Expensive","parent":"Counter","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in Counter","owner":"Counter","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Counter","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Expensive","parent":"Counter","memo":false,"consumes":[],"renderCount":0,"reason":"element-identity","detail":"React saw the same element object it already had and bailed out","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]},{"id":"children-inline","variant":"defeated","title":"The same tree with the child created inside Counter","question":"Can a child skip re-rendering with no React.memo, no useMemo and no useCallback?","claim":"Moving one JSX element re-renders Expensive on every click.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Counter","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"Expensive","parent":"Counter","elementFrom":"Counter","memo":false,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in Counter","owner":"Counter","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Counter","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Expensive","parent":"Counter","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true}]}]}]},{"id":"memo-with-children","scenarios":[{"id":"memo-children-inline","variant":"defeated","title":"React.memo on a wrapper with inline children","question":"Does React.memo help a wrapper component that takes children?","claim":"The children prop is a new element object every render, so the memo never bails out and the whole subtree re-renders.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoPanel","parent":"App","elementFrom":"App","memo":true,"consumes":[]},{"name":"Expensive","parent":"MemoPanel","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"App","memo":true,"consumes":[],"renderCount":1,"reason":"props-changed","detail":"React.memo compared props and found a change","propsChanged":["children"],"propsDetail":[{"key":"children","before":"object","after":"object","sameContent":false}],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":false},{"name":"Expensive","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true}]}]},{"id":"memo-children-hoisted","variant":"works","title":"The same wrapper with the children element held stable","question":"Does React.memo help a wrapper component that takes children?","claim":"With the children element kept in a useMemo, MemoPanel and everything under it skip.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoPanel","parent":"App","elementFrom":"App","memo":true,"consumes":[]},{"name":"Expensive","parent":"MemoPanel","elementFrom":"(hoisted)","memo":false,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in App","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoPanel","parent":"App","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Expensive","parent":"MemoPanel","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]},{"id":"memo-vs-context","scenarios":[{"id":"memo-blocks-parent-state","variant":"works","title":"React.memo blocking a parent state change","question":"Does a React.memo boundary with unchanged props protect the subtree under it?","claim":"App re-renders, MemoSection and ThemeReader do not.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoSection","parent":"App","elementFrom":"App","memo":true,"consumes":[]},{"name":"ThemeReader","parent":"MemoSection","elementFrom":"MemoSection","memo":false,"consumes":[]}],"runs":[{"actionId":"change","actionLabel":"set unrelated state in App","owner":"App","domChanged":false,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoSection","parent":"App","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"ThemeReader","parent":"MemoSection","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]},{"id":"memo-does-not-block-context","variant":"defeated","title":"The same memo boundary with a context read below it","question":"Does a React.memo boundary with unchanged props protect the subtree under it?","claim":"MemoSection still bails out, and ThemeReader underneath it re-renders anyway. A context update reaches a consumer through a memo boundary that did not re-render.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"MemoSection","parent":"App","elementFrom":"App","memo":true,"consumes":[]},{"name":"ThemeReader","parent":"MemoSection","elementFrom":"MemoSection","memo":false,"consumes":["Theme"]}],"runs":[{"actionId":"change","actionLabel":"change the theme in context","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"MemoSection","parent":"App","memo":true,"consumes":[],"renderCount":0,"reason":"memo-bailout","detail":"React.memo compared props and found them all equal","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"ThemeReader","parent":"MemoSection","memo":false,"consumes":["Theme"],"renderCount":1,"reason":"context","detail":"a context value it reads changed identity","propsChanged":[],"propsDetail":[],"contextChanged":["Theme"],"readsUnchanged":[],"memoWouldHelp":false}]}]}]},{"id":"setstate-same-value","scenarios":[{"id":"setstate-same-value","variant":"control","title":"setState with the value it already has","question":"What happens when you set state to the value it already holds?","claim":"React compares the new state to the old one. The measured render count for App is the interesting number here, and it is not always zero.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Child","parent":"App","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"set","actionLabel":"setCount(0) when count is already 0","owner":"App","domChanged":false,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"state-bailout","detail":"React compared the new state to the current state, found them equal, and did not render at all","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Child","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]},{"id":"setstate-new-value","variant":"control","title":"The same setState with a genuinely new value","question":"What happens when you set state to the value it already holds?","claim":"App and Child both render once.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Child","parent":"App","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"set","actionLabel":"setCount(1) when count is 0","owner":"App","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Child","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"parent-render","detail":"the component that renders it re-rendered","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":true}]}]},{"id":"setstate-net-zero","variant":"control","title":"Two updates in one event that cancel out","question":"Does an unchanged final state always mean no render?","claim":"The measured render count for App here is the point of this scenario, and it differs from the plain same-value case above.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Child","parent":"App","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"set","actionLabel":"setCount(c => c + 1) then setCount(c => c - 1)","owner":"App","domChanged":false,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Child","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"render-then-bailout","detail":"React re-rendered its parent because it could not know the result in advance, found the state unchanged, and reused the whole subtree instead of descending","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]},{"id":"state-locality","scenarios":[{"id":"state-in-leaf","variant":"control","title":"State pushed down into the leaf that uses it","question":"What does moving state downwards actually buy?","claim":"Only the leaf re-renders. Its parent and its sibling do not.","nodes":[{"name":"App","parent":null,"elementFrom":null,"memo":false,"consumes":[]},{"name":"Sibling","parent":"App","elementFrom":"App","memo":false,"consumes":[]},{"name":"LeafCounter","parent":"App","elementFrom":"App","memo":false,"consumes":[]}],"runs":[{"actionId":"bump","actionLabel":"set count in LeafCounter","owner":"LeafCounter","domChanged":true,"counters":{},"countersAfterMount":{},"nodes":[{"name":"App","parent":null,"memo":false,"consumes":[],"renderCount":0,"reason":"above-the-update","detail":"the state that changed lives below it, and React only re-renders downwards","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"Sibling","parent":"App","memo":false,"consumes":[],"renderCount":0,"reason":"ancestor-skipped","detail":"its parent did not re-render, so React never reached it","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null},{"name":"LeafCounter","parent":"App","memo":false,"consumes":[],"renderCount":1,"reason":"state","detail":"its own state changed","propsChanged":[],"propsDetail":[],"contextChanged":[],"readsUnchanged":[],"memoWouldHelp":null}]}]}]}]}</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById('cascade-data').textContent);
+
+  // Theme. The button writes data-theme onto the root element; the stylesheet's [data-theme]
+  // rules are last and unconditional, so the choice wins whatever the system prefers.
+  var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
+  function systemDark() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function label() {
+    var current = root.getAttribute('data-theme');
+    toggle.textContent = (current || (systemDark() ? 'dark' : 'light')) === 'dark' ? 'light mode' : 'dark mode';
+  }
+  toggle.addEventListener('click', function () {
+    var current = root.getAttribute('data-theme') || (systemDark() ? 'dark' : 'light');
+    root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    label();
+  });
+  label();
+
+  var groupbar = document.getElementById('groupbar');
+  var variants = document.getElementById('variants');
+  var foot = document.getElementById('explorer-foot');
+  var chosenAction = {};
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function depthOf(nodes, node) {
+    var d = 0;
+    var byName = {};
+    nodes.forEach(function (n) { byName[n.name] = n; });
+    var cur = node;
+    while (cur && cur.parent) { d += 1; cur = byName[cur.parent]; }
+    return d;
+  }
+
+  function factsFor(node, run) {
+    var facts = [];
+    if (node.propsChanged.length) {
+      node.propsDetail.forEach(function (p) {
+        facts.push(
+          'prop ' + p.key + ' changed identity (' + p.before + ' to ' + p.after + ')' +
+          (p.sameContent ? ', holding the same data as before' : '')
+        );
+      });
+    }
+    if (node.contextChanged.length) {
+      facts.push('context ' + node.contextChanged.join(', ') + ' changed identity');
+    }
+    if (node.readsUnchanged.length) {
+      facts.push('the field it reads (' + node.readsUnchanged.join(', ') + ') is the identical value it already had');
+    }
+    if (node.memoWouldHelp === true) {
+      facts.push('React.memo here would have prevented this render: no prop changed identity');
+    } else if (node.memoWouldHelp === false && node.renderCount > 0) {
+      facts.push('React.memo here would not have prevented this render');
+    }
+    if (node.name === run.owner && node.renderCount === 0) {
+      facts.push('this is the component whose state was set, and React still did not render it');
+    }
+    return facts;
+  }
+
+  function renderRun(scenario, run) {
+    var list = el('ul', 'tree');
+    scenario.nodes.forEach(function (spec) {
+      var node = null;
+      run.nodes.forEach(function (n) { if (n.name === spec.name) node = n; });
+      if (!node) return;
+      var li = el('li', 'node ' + (node.renderCount > 0 ? 'rendered' : 'skipped'));
+      li.style.marginLeft = (depthOf(scenario.nodes, spec) * 12) + 'px';
+      li.setAttribute('data-component', node.name);
+      li.setAttribute('data-renders', String(node.renderCount));
+      var head = el('div', 'head');
+      head.appendChild(el('span', 'name', node.name));
+      head.appendChild(el('span', 'count', node.renderCount > 0 ? ('rendered x' + node.renderCount) : 'did not render'));
+      if (spec.memo) head.appendChild(el('span', 'tag', 'React.memo'));
+      (spec.consumes || []).forEach(function (c) { head.appendChild(el('span', 'tag', 'reads ' + c + ' context')); });
+      if (node.name === run.owner) head.appendChild(el('span', 'tag', 'state set here'));
+      li.appendChild(head);
+      li.appendChild(el('div', 'cause', node.detail));
+      factsFor(node, run).forEach(function (f) { li.appendChild(el('p', 'fact', f)); });
+      list.appendChild(li);
+    });
+    return list;
+  }
+
+  function renderGroup(groupId) {
+    var group = null;
+    DATA.groups.forEach(function (g) { if (g.id === groupId) group = g; });
+    if (!group) return;
+    variants.innerHTML = '';
+    group.scenarios.forEach(function (scenario) {
+      var panel = el('div', 'variant');
+      panel.setAttribute('data-scenario', scenario.id);
+      var h = el('h3');
+      h.appendChild(el('span', null, scenario.title));
+      h.appendChild(el('span', 'badge ' + scenario.variant, scenario.variant));
+      panel.appendChild(h);
+      panel.appendChild(el('p', 'claim', scenario.claim));
+
+      var active = chosenAction[scenario.id] || scenario.runs[0].actionId;
+      if (scenario.runs.length > 1) {
+        var bar = el('div', 'actions');
+        scenario.runs.forEach(function (run) {
+          var b = el('button', null, run.actionLabel);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', String(run.actionId === active));
+          b.addEventListener('click', function () {
+            chosenAction[scenario.id] = run.actionId;
+            renderGroup(groupId);
+          });
+          bar.appendChild(b);
+        });
+        panel.appendChild(bar);
+      } else {
+        panel.appendChild(el('p', 'claim', 'action: ' + scenario.runs[0].actionLabel));
+      }
+
+      var run = scenario.runs[0];
+      scenario.runs.forEach(function (r) { if (r.actionId === active) run = r; });
+      panel.appendChild(renderRun(scenario, run));
+
+      var extra = [];
+      var counterKeys = Object.keys(run.counters || {});
+      counterKeys.forEach(function (k) {
+        extra.push(k + ': ' + run.countersAfterMount[k] + ' after mount, ' + run.counters[k] + ' after the update');
+      });
+      extra.push(run.domChanged ? 'the DOM changed' : 'the DOM did not change at all');
+      panel.appendChild(el('p', 'foot', extra.join(' | ')));
+      variants.appendChild(panel);
+    });
+
+    var total = 0;
+    var skipped = 0;
+    group.scenarios.forEach(function (s) {
+      var active = chosenAction[s.id] || s.runs[0].actionId;
+      s.runs.forEach(function (r) {
+        if (r.actionId !== active) return;
+        r.nodes.forEach(function (n) { total += n.renderCount; if (n.renderCount === 0) skipped += 1; });
+      });
+    });
+    foot.textContent = group.scenarios.length + ' variant(s) shown, ' + total +
+      ' component render(s) measured across them, ' + skipped + ' component(s) skipped.';
+
+    Array.prototype.forEach.call(groupbar.querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-group') === groupId));
+    });
+  }
+
+  DATA.groups.forEach(function (g) {
+    var b = el('button', null, g.id);
+    b.type = 'button';
+    b.setAttribute('data-group', g.id);
+    b.addEventListener('click', function () { renderGroup(g.id); });
+    groupbar.appendChild(b);
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-goto]'), function (b) {
+    b.addEventListener('click', function () {
+      renderGroup(b.getAttribute('data-goto'));
+      document.getElementById('groupbar').scrollIntoView({ block: 'start' });
+    });
+  });
+
+  renderGroup(DATA.groups[0].id);
+
+  // Proof for anything checking this page that the script parsed and ran to the end. A page whose
+  // script fails to parse still looks fine, and every unit test still passes.
+  root.setAttribute('data-script', 'ran');
+  root.setAttribute('data-renders', String(DATA.totals.renders));
+})();
+</script>
+</body>
+</html>
