@@ -23,7 +23,10 @@ run_sabotage() {
   n=$((n + 1))
   local dir="$TMP/s$n"
   mkdir -p "$dir"
-  git -C "$ROOT" ls-files -z | tar -C "$ROOT" --null -T - -cf - | tar -C "$dir" -xf -
+  # The working tree, not just the committed tree: a sabotage against a stale copy of the source
+  # would exercise code that is not the code under test.
+  git -C "$ROOT" ls-files -z --cached --others --exclude-standard \
+    | tar -C "$ROOT" --null -T - -cf - | tar -C "$dir" -xf -
   ln -s "$ROOT/node_modules" "$dir/node_modules"
 
   local before after
@@ -50,7 +53,7 @@ PATCH
     bad "$name: the sabotage was NOT caught (check exited 0)"
     sed 's/^/        /' "$dir/check.log" | tail -12
   else
-    ok "$name: caught, $(grep -cE '(FAIL|not ok|✖|Error)' "$dir/check.log" || true) failure line(s) reported"
+    ok "$name: caught, $(grep -cE '(FAIL|not ok|✖|Error|does not match|disagree)' "$dir/check.log" || true) failure line(s) reported"
   fi
 }
 
@@ -181,7 +184,7 @@ s = s.replace(old, "  var DATA = JSON.parse((document.getElementById('cascade-da
 open(p, 'w').write(s)
 PY
 run_sabotage "the page's inline script no longer parses" "$TMP/patches/7.py" \
-  "grep -c 'JSON.parse((document' docs/index.html || true" \
+  "node scripts/check-page.mjs 2>&1 | grep -E 'inline script|browser check' || true" \
   "node scripts/check-page.mjs"
 
 # ---------------------------------------------------------------------------------------------
