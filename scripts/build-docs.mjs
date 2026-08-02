@@ -367,6 +367,10 @@ ${tableRows}
     return d;
   }
 
+  function plural(n, word) {
+    return n + ' ' + word + (n === 1 ? '' : 's');
+  }
+
   function factsFor(node, run) {
     var facts = [];
     if (node.propsChanged.length) {
@@ -386,12 +390,13 @@ ${tableRows}
     if (node.memoWouldHelp === true) {
       facts.push(
         'measured: with React.memo on every component in this tree, ' + node.name +
-        ' rendered ' + node.memoAllRenderCount + ' times instead of ' + node.renderCount
+        ' rendered ' + plural(node.memoAllRenderCount, 'time') + ' instead of ' +
+        plural(node.renderCount, 'time')
       );
     } else if (node.memoWouldHelp === false && node.renderCount > 0) {
       facts.push(
         'measured: even with React.memo on every component in this tree, ' + node.name +
-        ' still rendered ' + node.memoAllRenderCount + ' times'
+        ' still rendered ' + plural(node.memoAllRenderCount, 'time')
       );
     }
     if (node.name === run.owner && node.renderCount === 0) {
@@ -466,8 +471,8 @@ ${tableRows}
         extra.push(k + ': ' + run.countersAfterMount[k] + ' after mount, ' + run.counters[k] + ' after the update');
       });
       extra.push(run.domChanged ? 'the DOM changed' : 'the DOM did not change at all');
-      extra.push('with React.memo on every component: ' + run.memoAllTotal + ' render(s) instead of ' +
-        run.nodes.reduce(function (n, x) { return n + x.renderCount; }, 0));
+      extra.push('with React.memo on every component: ' + plural(run.memoAllTotal, 'render') +
+        ' instead of ' + plural(run.nodes.reduce(function (n, x) { return n + x.renderCount; }, 0), 'render'));
       panel.appendChild(el('p', 'foot', extra.join(' | ')));
       variants.appendChild(panel);
     });
@@ -481,8 +486,9 @@ ${tableRows}
         r.nodes.forEach(function (n) { total += n.renderCount; if (n.renderCount === 0) skipped += 1; });
       });
     });
-    foot.textContent = group.scenarios.length + ' variant(s) shown, ' + total +
-      ' component render(s) measured across them, ' + skipped + ' component(s) skipped.';
+    foot.textContent = plural(group.scenarios.length, 'variant') + ' shown, ' +
+      plural(total, 'component render') + ' measured across them, ' +
+      plural(skipped, 'component') + ' skipped.';
 
     Array.prototype.forEach.call(groupbar.querySelectorAll('button'), function (b) {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-group') === groupId));

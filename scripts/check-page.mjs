@@ -269,7 +269,7 @@ try {
       bad(`${groupsChecked}/${expected.groups} groups checked, ${groupMismatches} mismatch(es)`);
     }
 
-    if (/\d+ component render\(s\) measured/.test(report.footText)) {
+    if (/\d+ component renders? measured/.test(report.footText)) {
       ok('the explorer summary line was computed in the browser');
     } else {
       bad(`the explorer summary line is missing: "${report.footText}"`);

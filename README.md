@@ -190,7 +190,7 @@ rerender-cascade verification
 
 7. the page in a real browser
   ok    browser check: 21 passed, 0 failed
-      ok    port 41031 is serving this project's page
+      ok    port 44559 is serving this project's page
       ok    390px: no element overflows the page
       ok    the inline script parsed and ran to the end
       ok    the script counted 53 measured re-renders, matching the recording
