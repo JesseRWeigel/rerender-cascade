@@ -1,5 +1,7 @@
 # rerender-cascade
 
+**[Open the live page](https://jesserweigel.github.io/rerender-cascade/)**
+
 A component tree, a state change at any node, and the exact list of which components React
 re-rendered and why. Every number comes out of running real React in Node, instrumenting the
 render calls, and counting. There is no hand-written table of "this re-renders" anywhere in the
@@ -253,3 +255,5 @@ rerender-cascade verification passed
 ## Licence
 
 MIT. See `LICENSE`.
+
+Part of [722 things to build](https://github.com/JesseRWeigel/722-things-to-build).
