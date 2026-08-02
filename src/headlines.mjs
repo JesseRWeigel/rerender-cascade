@@ -13,7 +13,7 @@ export const HEADLINES = [
     node: 'MemoButton',
     works: ['memo-usecallback', 'bump'],
     defeated: ['memo-inline-arrow', 'bump'],
-    expectation: 'The two functions have byte-identical source. React compares identity, not source.',
+    expectation: 'The two functions have byte-identical source. React compares identity and never looks at the source.',
   },
   {
     title: 'useCallback that does nothing',

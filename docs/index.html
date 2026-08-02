@@ -173,7 +173,7 @@ footer code { background: var(--panel); padding: .05rem .3rem; border-radius: .3
       </article>
       <article class="card">
         <h3>React.memo, defeated by one inline arrow</h3>
-        <p class="expectation">The two functions have byte-identical source. React compares identity, not source.</p>
+        <p class="expectation">The two functions have byte-identical source. React compares identity and never looks at the source.</p>
         <dl class="pair">
           <div class="row bad">
             <dt><code>memo-inline-arrow</code></dt>

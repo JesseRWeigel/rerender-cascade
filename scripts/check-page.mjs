@@ -196,6 +196,79 @@ try {
       bad(`${mismatched} drawn node(s) disagree with the recording (drew ${report.nodes.length})`);
     }
 
+    // Every row of the static table, against the recording. Checking one group's tree would leave
+    // the other eleven and all 124 rows unexamined.
+    const expectedRows = data.scenarios.flatMap((s) =>
+      s.runs.flatMap((r) => r.nodes.map((n) => [s.id, r.actionId, n.name, String(n.renderCount), n.reason].join('|'))),
+    );
+    const actualRows = await page.evaluate(() =>
+      [...document.querySelectorAll('#all-measurements tbody tr')].map((tr) =>
+        [...tr.children].map((td) => td.textContent.trim()).join('|'),
+      ),
+    );
+    const rowDiff = expectedRows.filter((row, i) => row !== actualRows[i]);
+    if (rowDiff.length === 0 && actualRows.length === expectedRows.length) {
+      ok(`all ${actualRows.length} table rows match the recording exactly`);
+    } else {
+      bad(`${rowDiff.length} table row(s) disagree with the recording`);
+      rowDiff.slice(0, 3).forEach((r, i) => console.log(`        want ${r} / got ${actualRows[i]}`));
+    }
+
+    // Click through every group and compare each drawn tree against the recording.
+    let groupsChecked = 0;
+    let groupMismatches = 0;
+    for (const group of [...new Set(data.scenarios.map((s) => s.group))]) {
+      const drawnGroup = await page.evaluate((g) => {
+        if (document.title !== 'rerender-cascade') return { wrongPage: true };
+        const button = [...document.querySelectorAll('#groupbar button')].find(
+          (b) => b.getAttribute('data-group') === g,
+        );
+        if (!button) return { missing: true };
+        button.click();
+        return {
+          panels: [...document.querySelectorAll('#variants .variant')].map((p) => ({
+            scenario: p.getAttribute('data-scenario'),
+            nodes: [...p.querySelectorAll('.node')].map((n) => ({
+              component: n.getAttribute('data-component'),
+              renders: Number(n.getAttribute('data-renders')),
+            })),
+          })),
+        };
+      }, group);
+      if (drawnGroup.wrongPage) {
+        bad('the browser navigated away from this page mid-check');
+        break;
+      }
+      if (drawnGroup.missing) {
+        bad(`no button for group ${group}`);
+        continue;
+      }
+      groupsChecked += 1;
+      const wanted = data.scenarios.filter((s) => s.group === group);
+      if (drawnGroup.panels.length !== wanted.length) {
+        bad(`group ${group} drew ${drawnGroup.panels.length} panels, expected ${wanted.length}`);
+        groupMismatches += 1;
+        continue;
+      }
+      for (const panel of drawnGroup.panels) {
+        const s = wanted.find((x) => x.id === panel.scenario);
+        // Whichever action is showing must be one of the recorded ones and must match it exactly.
+        const matches = s.runs.some((r) =>
+          r.nodes.length === panel.nodes.length &&
+          r.nodes.every((n, i) => panel.nodes[i].component === n.name && panel.nodes[i].renders === n.renderCount),
+        );
+        if (!matches) {
+          bad(`group ${group} panel ${panel.scenario} does not match any recorded run`);
+          groupMismatches += 1;
+        }
+      }
+    }
+    if (groupsChecked === expected.groups && groupMismatches === 0) {
+      ok(`all ${groupsChecked} groups draw trees that match the recording`);
+    } else {
+      bad(`${groupsChecked}/${expected.groups} groups checked, ${groupMismatches} mismatch(es)`);
+    }
+
     if (/\d+ component render\(s\) measured/.test(report.footText)) {
       ok('the explorer summary line was computed in the browser');
     } else {

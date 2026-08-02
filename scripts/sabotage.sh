@@ -203,6 +203,39 @@ run_sabotage "the independent recount loses its stale-flag filter" "$TMP/patches
   "node scripts/independent-check.mjs 2>&1 | tail -3" \
   "node scripts/independent-check.mjs"
 
+# ---------------------------------------------------------------------------------------------
+cat >"$TMP/patches/9.py" <<'PYX'
+# 9. The page generator draws the wrong field, then regenerates the page so the generator's own
+#    --check agrees with itself. Only loading the page and comparing it to the recording can catch
+#    a validator that compares two derivations of the same bug.
+import subprocess
+p = 'scripts/build-docs.mjs'
+s = open(p).read()
+old = '<td class="num">${n.renderCount}</td>'
+assert old in s, 'anchor missing'
+s = s.replace(old, '<td class="num">${n.mountRenders}</td>', 1)
+open(p, 'w').write(s)
+subprocess.run(['node', 'scripts/build-docs.mjs'], check=True, capture_output=True)
+PYX
+run_sabotage "the page generator draws the wrong field and regenerates itself" "$TMP/patches/9.py" \
+  "grep -o 'class=\"num\">[0-9]*' docs/index.html | sort | uniq -c" \
+  "node scripts/build-docs.mjs --check && node scripts/check-page.mjs"
+
+# ---------------------------------------------------------------------------------------------
+cat >"$TMP/patches/10.py" <<'PYX'
+# 10. The declared component tree stops matching the tree React actually builds. Attribution reads
+#     that metadata, so a wrong parent would quietly produce wrong causes everywhere below it.
+p = 'src/scenarios.mjs'
+s = open(p).read()
+old = "    { name: 'PanelBody', parent: 'MemoPanel' },"
+assert old in s, 'anchor missing'
+s = s.replace(old, "    { name: 'PanelBody', parent: 'Main' },", 1)
+open(p, 'w').write(s)
+PYX
+run_sabotage "the declared tree stops matching React's fiber tree" "$TMP/patches/10.py" \
+  "node scripts/observe.mjs" \
+  "node scripts/independent-check.mjs"
+
 echo
 echo "$pass sabotage(s) caught, $fail not caught"
 [ "$fail" = "0" ] || exit 1

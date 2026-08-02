@@ -5,11 +5,11 @@ re-rendered and why. Every number comes out of running real React in Node, instr
 render calls, and counting. There is no hand-written table of "this re-renders" anywhere in the
 project, because that is the kind of thing that is wrong in a way nobody notices.
 
-The interesting part is not the cases where intuition is right. It is the cases where a
-`React.memo` is present and does nothing, where a context consumer re-renders on a field it does
-not read, where `useMemo` is written correctly and still never hits, and where a child skips its
-render with no memoisation of any kind. Each of those is a runnable scenario paired with a variant
-where the same optimisation works, and both are asserted.
+The teaching value sits in the cases developers consistently mispredict: a `React.memo` that is
+present and does nothing, a context consumer that re-renders on a field it does not read, a
+`useMemo` written in good faith that never hits, a child that skips its render with no memoisation
+of any kind. Each of those is a runnable scenario paired with a variant where the same optimisation
+works, and both are asserted.
 
 Open `docs/index.html` for the interactive version.
 
@@ -106,10 +106,20 @@ script could have produced.
   measures for itself whether the DOM changed.
 - **Negative controls.** Every optimisation the project claims prevents a render is paired with a
   run where the same optimisation does not, and verify fails if any group loses its pair.
-- **Sabotage.** `scripts/sabotage.sh` breaks the probe, the attribution, a scenario's fix, the
-  recorded data, the published page's numbers, the page's script syntax, and the independent
-  recount's own correctness rule. Each sabotage is proved to have changed real output before any
-  conclusion is drawn from it, then the corresponding check must fail.
+- **Sabotage.** `scripts/sabotage.sh` runs ten attacks, each in a throwaway copy of the working
+  tree. It drops one component's renders in the probe, compares props by value instead of by
+  identity, credits a `React.memo` bail-out to a subtree React never reached, removes the fix from
+  a fixed variant, hand-edits a render count in the recorded data, hand-edits a number on the
+  published page, puts one unbalanced parenthesis in the page's inline script, removes the
+  correctness rule from the independent recount, makes the page generator read the wrong field and
+  regenerate the page so the generator's own `--check` agrees with itself, and breaks the declared
+  component tree. Every one of them is proved to have changed real output before any conclusion is
+  drawn from it, because an attack that did not apply is a no-op with a confident write-up attached.
+  Then the corresponding check has to fail.
+
+  The ninth of those is the interesting one. `build-docs.mjs --check` passes it, because comparing
+  a page against the script that produced it cannot catch a bug in that script. Only loading the
+  page in a browser and comparing all 124 rows against the recording catches it.
 
 ## One measured disagreement, kept rather than smoothed over
 
@@ -166,8 +176,8 @@ rerender-cascade verification
   ok    docs/index.html matches data/cascades.json (124 verdicts)
 
 7. the page in a real browser
-  ok    browser check: 19 passed, 0 failed
-      ok    port 41793 is serving this project's page
+  ok    browser check: 21 passed, 0 failed
+      ok    port 46175 is serving this project's page
       ok    390px: no element overflows the page
       ok    the inline script parsed and ran to the end
       ok    the script counted 53 measured re-renders, matching the recording
@@ -176,6 +186,8 @@ rerender-cascade verification
       ok    124 rows in the full measurement table
       ok    9 headline cards
       ok    the 9 drawn tree nodes match the recorded render counts
+      ok    all 124 table rows match the recording exactly
+      ok    all 12 groups draw trees that match the recording
       ok    the explorer summary line was computed in the browser
       ok    the theme toggle flips both ways (dark then light)
       ok    the background actually changes with the toggle (rgb(15, 18, 24) vs rgb(255, 255, 255))
@@ -188,7 +200,7 @@ rerender-cascade verification
       ok    no page errors or console errors
 
 8. sabotage: break each check on purpose and require it to notice
-  ok    8 sabotage(s) caught, 0 not caught
+  ok    10 sabotage(s) caught, 0 not caught
           probe drops MemoToolbar renders: sabotage changed 2 line(s) of real output
           attribution compares props by value, not identity: sabotage changed 8 line(s) of real output
           attribution credits memo for a subtree React never reached: sabotage changed 6 line(s) of real output
@@ -197,13 +209,15 @@ rerender-cascade verification
           a number on docs/index.html is edited by hand: sabotage changed 3 line(s) of real output
           the page's inline script no longer parses: sabotage changed 4 line(s) of real output
           the independent recount loses its stale-flag filter: sabotage changed 3 line(s) of real output
+          the page generator draws the wrong field and regenerates itself: sabotage changed 3 line(s) of real output
+          the declared tree stops matching React's fiber tree: sabotage changed 8 line(s) of real output
 
 9. nothing private or oversized in git
   ok    no absolute home paths in tracked files
   ok    no credential-shaped strings in tracked files
   ok    no tracked file contains a NUL byte, so the scans above could read all of them
   ok    node_modules is not tracked
-  ok    no tracked file is over 1 MB (22 files, 404 KB total)
+  ok    no tracked file is over 1 MB (22 files, 408 KB total)
 
 10. the README block regenerates from the recording
   ok    README.md measured block matches the recording (9 paired cases)
@@ -216,7 +230,7 @@ rerender-cascade verification
   ok    README states "124 component verdicts"
   ok    README states "53 re-renders"
   ok    README states "React 19.2.8"
-  ok    README states "8 sabotage"
+  ok    README states "10 sabotage"
 
 26 passed, 0 failed
 rerender-cascade verification passed
