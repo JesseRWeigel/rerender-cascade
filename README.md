@@ -162,7 +162,7 @@ it has independently measured that the DOM did not change. Everything else is a 
 ```
 $ bash scripts/verify.sh
 rerender-cascade verification
-  node v24.13.0, repo ~/Projects/thousand/projects/rerender-cascade
+  node v24.13.0, repo <repo>/rerender-cascade
 
 1. dependencies
   ok    react 19.2.8
